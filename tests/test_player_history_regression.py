@@ -36,7 +36,7 @@ class PlayerHistoryRegressionTests(unittest.TestCase):
                     render_player_page(
                         False,
                         load_players=lambda _: [{"player_id": "demo", "display_name": "Demo Player", "active": True}],
-                        load_player_profile=lambda _: {"player": "Demo Player"},
+                        load_player_profile=lambda _: {"player": "Demo Player", "peak_elo": 1100.0},
                         load_player_timeline=lambda *_: timeline,
                         load_player_history=lambda _: [],
                         load_player_insights=lambda _: {
@@ -51,6 +51,13 @@ class PlayerHistoryRegressionTests(unittest.TestCase):
                 charts = [call.args[0].to_dict() for call in ui.altair_chart.call_args_list]
                 self.assertEqual(len(charts), 2 if count else 0)
                 if count:
+                    rendered = " ".join(call.args[0] for call in ui.markdown.call_args_list)
+                    self.assertIn("1100.0", rendered)
+                    self.assertIn("Highest rating after any rated set", rendered)
+                    self.assertIn("TOURNAMENT-END PEAK", rendered)
+                    self.assertIn("Highest rating at tournament end", rendered)
+                    self.assertIn(f"{max(row['elo'] for row in timeline):.1f}", rendered)
+                    self.assertTrue(any("after individual sets" in call.args[0] for call in ui.caption.call_args_list))
                     for chart in charts:
                         datasets = list(chart["datasets"].values())
                         self.assertEqual(

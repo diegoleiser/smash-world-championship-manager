@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+from collections.abc import Sequence
 
 
 def _sentence_count(text: str) -> int:
@@ -21,23 +22,31 @@ def _stable_variant(seed: str, *options: str) -> str:
     return options[int.from_bytes(digest[:4], "big") % len(options)]
 
 
-def _select_preview_sentences(sentences: list[str]) -> list[str]:
+def _select_preview_sentences(
+    sentences: list[str], *, priority_sentences: Sequence[str] = (),
+) -> list[str]:
     """Keep the preview concise while preserving distinct story angles."""
 
     if not sentences:
         return []
 
-    selected = [sentences[0]]
+    selected = [sentences[0], *priority_sentences]
+    budget = 10 if priority_sentences else 9
+
+    def add(sentence: str) -> None:
+        if sum(_sentence_count(s) for s in selected) + _sentence_count(sentence) <= budget:
+            selected.append(sentence)
+
     themes = (
         ("defending champion",),
         ("title race", "most decorated", "only active player"),
         ("recent set record", "strongest recent form"),
-        ("trending upward", "dark horse"),
+        ("trending upward", "dark horse", "although the latest event"),
         ("poor form",),
         ("active winning streak",),
         ("rivalry to watch",),
         ("Their latest meeting",),
-        ("wide open", "chasing field"),
+        ("wide open", "chasing field", "leading trio"),
     )
 
     for keywords in themes:
@@ -51,22 +60,37 @@ def _select_preview_sentences(sentences: list[str]) -> list[str]:
             None,
         )
         if candidate is not None:
-            selected.append(candidate)
-        if len(selected) == 9:
+            add(candidate)
+        if sum(_sentence_count(s) for s in selected) >= budget:
             return selected
 
     for sentence in sentences[1:]:
         if sentence not in selected:
-            selected.append(sentence)
-        if len(selected) == 9:
+            add(sentence)
+        if sum(_sentence_count(s) for s in selected) >= budget:
             break
 
     return selected
 
 
-def _select_tournament_sentences(sentences: list[str]) -> list[str]:
-    """Select up to ten high-value tournament recap sentences."""
+def _select_tournament_sentences(
+    sentences: list[str], *, priority_sentences: Sequence[str] = (),
+) -> list[str]:
+    """Select distinct recap angles; allow twelve sentences for enriched evidence."""
 
+    if priority_sentences:
+        mandatory = [sentences[0], *priority_sentences]
+        chosen = list(mandatory)
+        count = sum(_sentence_count(s) for s in chosen)
+        extras = [s for s in sentences[1:] if s not in chosen]
+        # Distinct rating consequences and upsets outrank ancillary milestones.
+        extras.sort(key=lambda s: (not any(k in s for k in ("biggest Elo gain", "biggest Elo upset", "World Championship title")), sentences.index(s)))
+        for sentence in extras:
+            size = _sentence_count(sentence)
+            if count + size <= 12:
+                chosen.append(sentence)
+                count += size
+        return [s for s in sentences if s in chosen]
     if len(sentences) <= 10:
         return sentences
 

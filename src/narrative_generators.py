@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from narrative_stories import select_stories
+
 from narrative_common import (
     _select_preview_sentences,
     _select_tournament_sentences,
@@ -121,7 +123,9 @@ def _rivalry_scoreline_sentence(
             continue
         left, right = str(score).split("-", 1)
         try:
-            known_scores.append((int(left), int(right)))
+            parsed = (int(left), int(right))
+            if max(parsed) >= 2:
+                known_scores.append(parsed)
         except ValueError:
             continue
 
@@ -370,10 +374,7 @@ def generate_rivalry_summary(h2h: dict[str, Any]) -> str:
                 )
             )
         elif set_leader is not None and max(wins_a, wins_b) / decided_sets >= 0.7:
-            sentences.append(
-                f"Across {decided_sets} decided sets, {set_leader} has "
-                f"established clear control of the matchup."
-            )
+            pass  # The opening already states the historical advantage.
         else:
             sentences.append(
                 f"The {decided_sets} recorded meetings have produced a "
@@ -628,6 +629,8 @@ def generate_player_summary(
     else:
         performance += "."
 
+    stories = insights.get("stories") or []
+
     sentences = [opening, performance]
 
     if peak_elo <= current_elo + 0.05:
@@ -689,6 +692,41 @@ def generate_player_summary(
                 f"with an increase of {change:.1f} points."
             )
 
+    if stories:
+        selected = select_stories(stories, limit=2 if appearances <= 1 else 3)
+        if appearances <= 1:
+            # A debut warrants a short first impression, not a career retrospective.
+            return " ".join([*selected, performance])
+
+        # Distinctive stories complement the career record rather than replacing it.
+        career = [opening, performance]
+        context = []
+        if titles == 0 and best_result is not None:
+            context.append(
+                f"Their best tournament finish so far is {_ordinal(int(best_result))} place."
+            )
+        if best_elo_event and best_elo_event.get("tournament") and float(best_elo_event.get("elo_change", 0)) > 0:
+            context.append(
+                f"Their biggest Elo gain came at {best_elo_event['tournament']}, "
+                f"with an increase of {float(best_elo_event['elo_change']):.1f} points."
+            )
+        if peak_elo - current_elo >= 40:
+            context.append(
+                f"Their career-high Elo is {peak_elo:.1f}, "
+                f"{peak_elo - current_elo:.1f} points above their current rating."
+            )
+        combined = " ".join(selected)
+        if opponent_storyline:
+            opponent = str((nemesis or {}).get("opponent", ""))
+            rival = str((featured_rivalry or {}).get("opponent", ""))
+            if not any(name and name in combined for name in (opponent, rival)):
+                context.append(opponent_storyline)
+        if longest_win_streak >= 5 and "consecutive wins" not in combined and "streak" not in combined:
+            context.append(f"Their longest winning streak stands at {longest_win_streak} sets.")
+        # More established profiles can use spare space for two concrete career facts.
+        extra_limit = 2 if appearances >= 5 and len(selected) == 1 else 1
+        return " ".join([*selected, *career, *context[:extra_limit]])
+
     return " ".join(sentences[:6])
 
 def _find_final_match(
@@ -699,7 +737,7 @@ def _find_final_match(
     knockout_matches = [
         match
         for match in matches
-        if match.get("stage") == "knockout"
+        if match.get("stage") in {"knockout", "bracket"}
         and match.get("winner")
     ]
 
@@ -773,7 +811,7 @@ def _count_close_sets(
         if score_1 is None or score_2 is None:
             continue
 
-        if abs(int(score_1) - int(score_2)) == 1:
+        if max(int(score_1), int(score_2)) >= 2 and abs(int(score_1) - int(score_2)) == 1:
             close_sets += 1
 
     return close_sets
@@ -923,7 +961,8 @@ def generate_tournament_summary(
     else:
         opening = f"{winner} won {tournament_name}."
 
-    sentences = [opening]
+    story_sentences = select_stories(story_context.get("stories") or [], limit=5)
+    sentences = [opening, *story_sentences]
 
     # Title context
     if defending_champion == winner:
@@ -1190,7 +1229,14 @@ def generate_tournament_summary(
         if not title_already_mentioned:
             sentences.append(selected_milestone)
 
-    return " ".join(_select_tournament_sentences(sentences))
+    if story_sentences:
+        # The event arc already conveys the champion's performance; avoid filler and
+        # a second seed-based description of the same debut.
+        sentences = [sentence for sentence in sentences if not (
+            ("The champion also led the field" in sentence and any("without dropping" in s for s in story_sentences))
+            or ("initial seed" in sentence and any("debut" in s and sentence.startswith(s.split()[0] + " ") for s in story_sentences))
+        )]
+    return " ".join(_select_tournament_sentences(sentences, priority_sentences=story_sentences))
 
 def generate_tournament_preview(
     preview_data: dict[str, Any],
@@ -1354,6 +1400,7 @@ def generate_tournament_preview(
 
         trend_name = str(strongest_trend["player"])
         trend_gain = float(strongest_trend["elo_change_last_three"])
+        latest_change = float(strongest_trend.get("elo_change_latest", 0))
 
         already_featured = (
             eligible_form
@@ -1379,6 +1426,12 @@ def generate_tournament_preview(
                     f"{trend_gain:.1f} Elo points across the last three "
                     f"tournaments."
                 )
+
+    if positive_trends and not already_featured and trend_gain >= 15 and latest_change <= -10:
+        sentences[-1] = (
+            f"{trend_name} gained {trend_gain:.1f} Elo points across the last three "
+            f"tournaments, although the latest event brought a {abs(latest_change):.1f}-point drop."
+        )
 
     form_by_player = {
         str(row["player"]): row
@@ -1475,8 +1528,10 @@ def generate_tournament_preview(
             )
         else:
             sentences.append(
-                "The chasing field will need a strong performance to close "
-                "the gap to the current frontrunners."
+                "The leading trio spans "
+                f"{top_three_gap:.1f} Elo points; direct opponents and the tournament "
+                "draw remain important to the title race."
             )
 
-    return " ".join(_select_preview_sentences(sentences))
+    story_sentences = select_stories(preview_data.get("stories") or [], limit=2)
+    return " ".join(_select_preview_sentences(sentences, priority_sentences=story_sentences))

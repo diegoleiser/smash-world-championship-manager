@@ -52,7 +52,7 @@ def compact_metric_strip_html(
         overflow: hidden;
         border: 1px solid rgba(128, 128, 128, 0.30);
         border-radius: 0.8rem;
-        background: rgba(255, 255, 255, 0.018);
+        background: var(--swc-surface);
     }}
     .compact-metric-strip-cell {{
         padding: 0.8rem 0.9rem;
@@ -60,7 +60,7 @@ def compact_metric_strip_html(
     }}
     .compact-metric-strip-cell:last-child {{ border-right: none; }}
     .compact-metric-strip-label {{
-        color: rgba(250, 250, 250, 0.55);
+        color: var(--swc-text-550);
         font-size: 0.7rem;
         font-weight: 750;
         letter-spacing: 0.035em;
@@ -68,13 +68,13 @@ def compact_metric_strip_html(
     }}
     .compact-metric-strip-value {{
         margin-top: 0.28rem;
-        color: rgb(250, 250, 250);
+        color: var(--swc-text);
         font-size: 1.3rem;
         font-weight: 800;
     }}
     .compact-metric-strip-note {{
         margin-top: 0.18rem;
-        color: rgba(250, 250, 250, 0.58);
+        color: var(--swc-text-580);
         font-size: 0.7rem;
         font-weight: 650;
         line-height: 1.25;
@@ -205,14 +205,14 @@ def archived_match_result_html(
     """Return a compact read-only result card for an archived set."""
 
     player_1_color = (
-        "rgb(74, 222, 128)"
+        "var(--swc-positive-bright)"
         if winner_name == player_1_name
-        else "rgb(250, 250, 250)"
+        else "var(--swc-text)"
     )
     player_2_color = (
-        "rgb(74, 222, 128)"
+        "var(--swc-positive-bright)"
         if winner_name == player_2_name
-        else "rgb(250, 250, 250)"
+        else "var(--swc-text)"
     )
     return (
         '<div style="overflow:hidden;'
@@ -221,7 +221,7 @@ def archived_match_result_html(
         '<div style="padding:0.7rem 1rem;'
         'border-bottom:1px solid rgba(128,128,128,0.24);'
         'background:rgba(128,128,128,0.08);'
-        'color:rgba(250,250,250,0.58);'
+        'color:var(--swc-text-580);'
         'font-size:0.75rem;font-weight:750;'
         'letter-spacing:0.035em;text-align:center;'
         'text-transform:uppercase;">'
@@ -236,7 +236,7 @@ def archived_match_result_html(
         f"{html.escape(player_1_name)}"
         "</div>"
         '<div style="font-size:1.6rem;font-weight:850;'
-        'color:rgb(250,250,250);">'
+        'color:var(--swc-text);">'
         f"{html.escape(score_text)}"
         "</div>"
         '<div style="text-align:left;font-size:1.65rem;'
@@ -247,8 +247,8 @@ def archived_match_result_html(
         '<div style="display:grid;grid-template-columns:1fr 1fr;'
         'gap:1rem;padding:0.75rem 1rem;'
         'border-top:1px solid rgba(128,128,128,0.20);'
-        'background:rgba(255,255,255,0.018);'
-        'color:rgba(250,250,250,0.66);font-size:0.82rem;">'
+        'background:var(--swc-surface);'
+        'color:var(--swc-text-660);font-size:0.82rem;">'
         '<div style="text-align:left;">Winner · '
         f"<strong>{html.escape(winner_name or 'Unknown')}</strong>"
         "</div>"
@@ -279,13 +279,13 @@ def up_next_matchup_html(
     )
     probability_html = (
         '<div style="display:grid;grid-template-columns:1fr 1fr;'
-        'gap:2rem;margin:0.45rem 0 0.1rem;opacity:0.65;'
+        'gap:2rem;margin:0.45rem 0 0.1rem;color:var(--swc-text-650);'
         'font-size:0.82rem;min-height:1.25rem;">'
         f"{probability_content}"
         "</div>"
     )
     return (
-        '<div style="text-align:center;opacity:0.68;'
+        '<div style="text-align:center;color:var(--swc-text-680);'
         'font-size:0.9rem;font-weight:600;'
         'margin:0.1rem 0 0.45rem;">'
         f"{html.escape(context_label)}"
@@ -298,7 +298,7 @@ def up_next_matchup_html(
         'font-weight:800;line-height:1.1;">'
         f"{html.escape(player_1_name)}"
         "</div>"
-        '<div style="opacity:0.55;font-size:0.9rem;'
+        '<div style="color:var(--swc-text-550);font-size:0.9rem;'
         'font-weight:700;">VS</div>'
         '<div style="text-align:left;font-size:2.15rem;'
         'font-weight:800;line-height:1.1;">'
@@ -335,7 +335,7 @@ def compact_score_input_styles(
         overflow: hidden;
         border: 1px solid rgba(128, 128, 128, 0.42);
         border-radius: 0.65rem;
-        background: rgba(255, 255, 255, 0.025);
+        background: var(--swc-surface);
         box-shadow:
             0 1px 2px rgba(0, 0, 0, 0.25),
             0 6px 18px rgba(0, 0, 0, 0.08);
@@ -351,7 +351,7 @@ def compact_score_input_styles(
     }}
     {selector} input {{
         padding: 0 !important;
-        color: rgb(250, 250, 250) !important;
+        color: var(--swc-text) !important;
         font-size: 1.55rem !important;
         font-weight: 800 !important;
         text-align: center !important;
@@ -360,18 +360,18 @@ def compact_score_input_styles(
         width: 3.25rem;
         min-width: 3.25rem;
         border-radius: 0;
-        color: rgba(250, 250, 250, 0.68);
+        color: var(--swc-text-680);
         transition:
             background-color 0.15s ease,
             color 0.15s ease;
     }}
     {selector} div[data-baseweb="input"] button:hover {{
         background: rgba(59, 130, 246, 0.12);
-        color: rgb(250, 250, 250);
+        color: var(--swc-text);
     }}
     {stepper_separators}
     {selector} label p {{
-        color: rgba(250, 250, 250, 0.68);
+        color: var(--swc-text-680);
         font-size: 0.82rem;
         font-weight: 650;
     }}
@@ -526,7 +526,7 @@ def dashboard_table_html(
             min-height: 2.6rem;
             border-bottom: 1px solid rgba(128, 128, 128, 0.24);
             background: rgba(128, 128, 128, 0.08);
-            color: rgba(250, 250, 250, 0.55);
+            color: var(--swc-text-550);
             font-size: 0.72rem;
             font-weight: 750;
             letter-spacing: 0.035em;
@@ -556,14 +556,14 @@ def dashboard_table_html(
         .control-table-cell {
             min-width: 0;
             overflow: hidden;
-            color: rgba(250, 250, 250, 0.76);
+            color: var(--swc-text-760);
             font-size: 0.88rem;
             font-weight: 650;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
         .control-table-emphasis {
-            color: rgb(250, 250, 250);
+            color: var(--swc-text);
             font-size: 1.02rem;
             font-weight: 800;
         }
@@ -588,10 +588,10 @@ def dashboard_table_html(
             outline-offset: 3px;
         }
         .control-table-positive {
-            color: rgb(74, 222, 128);
+            color: var(--swc-positive-bright);
         }
         .control-table-negative {
-            color: rgb(248, 113, 113);
+            color: var(--swc-negative-soft);
         }
         @media (max-width: 900px) {
             .control-table-scroll {
@@ -619,7 +619,7 @@ def dashboard_table_html(
                 padding: 0.9rem 1rem;
                 border: 1px solid rgba(128, 128, 128, 0.30);
                 border-radius: 0.8rem;
-                background: rgba(255, 255, 255, 0.018);
+                background: var(--swc-surface);
             }
             .control-table-mobile-cards .control-table-row-winners {
                 background: rgba(34, 197, 94, 0.07);
@@ -640,7 +640,7 @@ def dashboard_table_html(
             }
             .control-table-mobile-cards .control-table-cell::before {
                 content: attr(data-label);
-                color: rgba(250, 250, 250, 0.52);
+                color: var(--swc-text-520);
                 font-size: 0.72rem;
                 font-weight: 750;
                 letter-spacing: 0.035em;
@@ -661,7 +661,7 @@ def dashboard_table_html(
                 border: 1px solid rgba(128, 128, 128, 0.30);
                 border-radius: 0.8rem;
                 background: rgba(128, 128, 128, 0.055);
-                color: rgba(250, 250, 250, 0.82);
+                color: var(--swc-text-820);
                 font-size: 0.86rem;
                 font-weight: 750;
                 cursor: pointer;
@@ -1007,7 +1007,7 @@ def dashboard_table_html(
                 grid-column: 1 / 2;
                 grid-row: 1 / 3;
                 justify-content: center;
-                color: rgba(250, 250, 250, 0.78);
+                color: var(--swc-text-780);
                 font-size: 1.15rem;
                 font-weight: 800;
             }
@@ -1017,7 +1017,7 @@ def dashboard_table_html(
                 grid-column: 4 / 5;
                 grid-row: 1 / 2;
                 align-items: flex-end;
-                color: rgba(250, 250, 250, 0.68);
+                color: var(--swc-text-680);
                 font-size: 0.9rem;
                 text-align: right;
             }
@@ -1100,14 +1100,14 @@ def dashboard_table_html(
             .control-table-mobile-titles
             .control-table-cell[data-label="Rank"] {
                 order: 1;
-                color: rgba(250, 250, 250, 0.68);
+                color: var(--swc-text-680);
                 font-size: 0.9rem;
             }
             .control-table-mobile-titles
             .control-table-cell[data-label="Titles"] {
                 order: 2;
                 align-items: flex-end;
-                color: #f2c94c;
+                color: var(--swc-gold);
                 font-size: 1.02rem;
                 font-weight: 800;
                 text-align: right;
@@ -1181,7 +1181,7 @@ def dashboard_table_html(
                 grid-column: 1 / 2;
                 grid-row: 1 / 3;
                 justify-content: center;
-                color: rgba(250, 250, 250, 0.78);
+                color: var(--swc-text-780);
                 font-size: 1.1rem;
                 font-weight: 800;
             }
@@ -1422,7 +1422,7 @@ def clickable_card_button_styles(
     }}
     {selector} button p {{
         width: 100%;
-        color: rgba(250, 250, 250, 0.58);
+        color: var(--swc-text-580);
         font-size: 0.78rem;
         line-height: 1.25;
         text-align: left;
@@ -1430,7 +1430,7 @@ def clickable_card_button_styles(
     {selector} button strong {{
         display: block;
         margin-bottom: 0.2rem;
-        color: rgb(250, 250, 250);
+        color: var(--swc-text);
         font-size: {title_font_size};
         line-height: 1.2;
     }}

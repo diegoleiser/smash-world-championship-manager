@@ -31,7 +31,7 @@ def _archived_tournament_selector_styles() -> str:
         padding: 0.55rem 0.85rem 0.75rem;
         border: 1px solid rgba(128, 128, 128, 0.30);
         border-radius: 0.8rem;
-        background: rgba(255, 255, 255, 0.018);
+        background: var(--swc-surface);
         transition:
             border-color 0.15s ease,
             background-color 0.15s ease,
@@ -46,7 +46,7 @@ def _archived_tournament_selector_styles() -> str:
         box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.18);
     }
     div[class*="st-key-archived_tournament_selector"] label p {
-        color: rgba(250, 250, 250, 0.72);
+        color: var(--swc-text-720);
         font-size: 0.82rem;
         font-weight: 750;
     }
@@ -107,14 +107,14 @@ def _tournament_recap_html(recap: str) -> str:
         padding: 1.4rem 1.6rem;
         border: 1px solid rgba(70, 150, 220, 0.18);
         border-radius: 0.8rem;
-        background: rgba(28, 74, 112, 0.55);
+        background: var(--swc-summary-bg);
     }}
     .tournament-recap-label {{
         padding-top: 0.15rem;
         font-size: 0.78rem;
         font-weight: 750;
         letter-spacing: 0.04em;
-        opacity: 0.72;
+        color:var(--swc-text-720);
     }}
     .tournament-recap-text {{
         font-size: 1rem;
@@ -208,7 +208,7 @@ def _archived_tournament_header_html(
         margin: 0.35rem 0 1rem;
         border: 1px solid rgba(128, 128, 128, 0.30);
         border-radius: 0.9rem;
-        background: rgba(255, 255, 255, 0.018);
+        background: var(--swc-surface);
     }}
     .archive-tournament-main {{
         display: none;
@@ -219,14 +219,14 @@ def _archived_tournament_header_html(
     }}
     .archive-tournament-eyebrow {{
         margin-bottom: 0.22rem;
-        color: rgba(250, 250, 250, 0.52);
+        color: var(--swc-text-520);
         font-size: 0.72rem;
         font-weight: 750;
         letter-spacing: 0.055em;
         text-transform: uppercase;
     }}
     .archive-tournament-title {{
-        color: rgb(250, 250, 250);
+        color: var(--swc-text);
         font-size: 1.85rem;
         font-weight: 850;
         line-height: 1.05;
@@ -242,7 +242,7 @@ def _archived_tournament_header_html(
         border: 1px solid rgba(128, 128, 128, 0.24);
         border-radius: 999px;
         background: rgba(128, 128, 128, 0.065);
-        color: rgba(250, 250, 250, 0.72);
+        color: var(--swc-text-720);
         font-size: 0.8rem;
         font-weight: 650;
         white-space: nowrap;
@@ -268,7 +268,7 @@ def _archived_tournament_header_html(
     }}
     .archive-podium-label {{
         margin-bottom: 0.2rem;
-        color: rgba(250, 250, 250, 0.52);
+        color: var(--swc-text-520);
         font-size: 0.7rem;
         font-weight: 750;
         letter-spacing: 0.035em;
@@ -276,7 +276,7 @@ def _archived_tournament_header_html(
     }}
     .archive-podium-player {{
         overflow: hidden;
-        color: rgb(250, 250, 250);
+        color: var(--swc-text);
         font-size: 1.25rem;
         font-weight: 800;
         text-overflow: ellipsis;
@@ -304,13 +304,13 @@ def _archived_tournament_header_html(
         gap: 0.65rem;
         min-height: 3.15rem;
         border-top: 1px solid rgba(128, 128, 128, 0.20);
-        color: rgba(250, 250, 250, 0.52);
+        color: var(--swc-text-520);
         font-size: 0.88rem;
         font-weight: 700;
     }}
     .archive-tournament-desktop-meta span + span::before {{
         margin-right: 0.65rem;
-        color: rgba(250, 250, 250, 0.24);
+        color: var(--swc-text-240);
         content: "•";
     }}
     @media (max-width: 700px) {{
@@ -533,7 +533,7 @@ def _elo_ranking_expander_styles() -> str:
         overflow: hidden;
         border: 1px solid rgba(128, 128, 128, 0.30);
         border-radius: 0.8rem;
-        background: rgba(255, 255, 255, 0.018);
+        background: var(--swc-surface);
         transition: border-color 0.15s ease, background-color 0.15s ease;
     }
     div[class*="st-key-archived_elo_ranking"] details:hover {
@@ -541,7 +541,7 @@ def _elo_ranking_expander_styles() -> str:
         background: rgba(128, 128, 128, 0.035);
     }
     div[class*="st-key-archived_elo_ranking"] details[open] {
-        background: rgba(255, 255, 255, 0.012);
+        background: var(--swc-surface);
     }
     div[class*="st-key-archived_elo_ranking"] summary {
         min-height: 3.5rem;
@@ -1086,7 +1086,7 @@ def render_tournaments(
                 "font-size:0.72rem;"
                 "font-weight:750;"
                 "letter-spacing:0.04em;"
-                "opacity:0.58;"
+                "color:var(--swc-text-580);"
                 "text-transform:uppercase;"
                 "}"
                 ".archive-elo-summary-value {"
@@ -1099,8 +1099,8 @@ def render_tournaments(
                 "font-size:0.82rem;"
                 "font-weight:750;"
                 "}"
-                ".archive-elo-positive {color:#3fb950;}"
-                ".archive-elo-negative {color:#f85149;}"
+                ".archive-elo-positive {color:var(--swc-positive);}"
+                ".archive-elo-negative {color:var(--swc-negative);}"
                 "@media (max-width:700px) {"
                 ".archive-elo-summary {grid-template-columns:1fr;}"
                 ".archive-elo-summary-item {"

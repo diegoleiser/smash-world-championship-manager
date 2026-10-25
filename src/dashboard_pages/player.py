@@ -38,7 +38,7 @@ def _player_selector_styles() -> str:
         padding: 0.55rem 0.85rem 0.75rem;
         border: 1px solid rgba(128, 128, 128, 0.30);
         border-radius: 0.8rem;
-        background: rgba(255, 255, 255, 0.018);
+        background: var(--swc-surface);
         transition:
             border-color 0.15s ease,
             background-color 0.15s ease,
@@ -53,7 +53,7 @@ def _player_selector_styles() -> str:
         box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.18);
     }
     div[class*="st-key-player_profile_selector"] label p {
-        color: rgba(250, 250, 250, 0.72);
+        color: var(--swc-text-720);
         font-size: 0.82rem !important;
         font-weight: 750 !important;
     }
@@ -144,7 +144,6 @@ def _placement_distribution_chart(
         title=None,
         sort=alt.SortField(field="placement", order="ascending"),
         axis=alt.Axis(
-            labelColor="#d7dce2",
             labelFontSize=13,
             labelFontWeight=700,
             labelPadding=12,
@@ -157,8 +156,8 @@ def _placement_distribution_chart(
         .mark_bar(
             cornerRadius=5,
             size=22,
-            color="#252b34",
-            opacity=0.72,
+            color="#808080",
+            opacity=0.14,
         )
         .encode(
             x=alt.X("track:Q", scale=x_scale, axis=None),
@@ -187,7 +186,6 @@ def _placement_distribution_chart(
         .mark_text(
             align="left",
             baseline="middle",
-            color="#f5f5f5",
             fontSize=12,
             fontWeight=700,
         )
@@ -429,13 +427,13 @@ def render_player_page(
         "}"
 
         ".player-header-status-active {"
-        "color:#3fb950;"
+        "color:var(--swc-positive);"
         "background:rgba(63,185,80,0.10);"
         "border:1px solid rgba(63,185,80,0.22);"
         "}"
 
         ".player-header-status-inactive {"
-        "color:rgba(255,255,255,0.58);"
+        "color:var(--swc-text-580);"
         "background:rgba(128,128,128,0.08);"
         "border:1px solid rgba(128,128,128,0.20);"
         "}"
@@ -443,7 +441,7 @@ def render_player_page(
         ".player-profile-description {"
         "font-size:0.9rem;"
         "font-weight:650;"
-        "opacity:0.62;"
+        "color:var(--swc-text-620);"
         "}"
 
         ".player-profile-current-stats {"
@@ -467,7 +465,7 @@ def render_player_page(
         "font-size:0.72rem;"
         "font-weight:750;"
         "letter-spacing:0.04em;"
-        "opacity:0.58;"
+        "color:var(--swc-text-580);"
         "}"
 
         ".player-profile-current-value {"
@@ -645,7 +643,7 @@ def render_player_page(
         "font-size:0.74rem;"
         "font-weight:750;"
         "letter-spacing:0.04em;"
-        "opacity:0.58;"
+        "color:var(--swc-text-580);"
         "text-transform:uppercase;"
         "}"
 
@@ -659,7 +657,7 @@ def render_player_page(
         ".career-overview-detail {"
         "font-size:0.76rem;"
         "font-weight:650;"
-        "opacity:0.52;"
+        "color:var(--swc-text-520);"
         "margin-top:0.5rem;"
         "}"
 
@@ -669,7 +667,7 @@ def render_player_page(
 
         ".career-overview-peak "
         ".career-overview-value {"
-        "color:#f2c94c;"
+        "color:var(--swc-gold);"
         "}"
 
         "@media (max-width:800px) {"
@@ -719,7 +717,7 @@ def render_player_page(
         f"{peak_elo:.1f}"
         "</div>"
         "<div class='career-overview-detail'>"
-        "Career high"
+        "Highest rating after any rated set"
         "</div>"
         "</div>"
 
@@ -827,7 +825,7 @@ def render_player_page(
             "padding:1.25rem 1.45rem;"
             "margin:0 0 1rem 0;"
             "border-radius:0 0 0.8rem 0.8rem;"
-            "background:rgba(28,74,112,0.55);"
+            "background:var(--swc-summary-bg);"
             "border:1px solid rgba(70,150,220,0.18);"
             "border-top:none;"
             "}"
@@ -836,7 +834,7 @@ def render_player_page(
             "font-size:0.78rem;"
             "font-weight:750;"
             "letter-spacing:0.04em;"
-            "opacity:0.72;"
+            "color:var(--swc-text-720);"
             "padding-top:0.15rem;"
             "}"
 
@@ -994,7 +992,7 @@ def render_player_page(
         "font-size:0.76rem;"
         "font-weight:750;"
         "letter-spacing:0.04em;"
-        "opacity:0.62;"
+        "color:var(--swc-text-620);"
         "text-transform:uppercase;"
         "}"
 
@@ -1015,7 +1013,7 @@ def render_player_page(
         ".player-insight-detail {"
         "font-size:0.8rem;"
         "font-weight:650;"
-        "opacity:0.58;"
+        "color:var(--swc-text-580);"
         "margin-top:0.2rem;"
         "}"
 
@@ -1045,7 +1043,7 @@ def render_player_page(
         ".player-streak-description {"
         "font-size:0.82rem;"
         "font-weight:650;"
-        "opacity:0.58;"
+        "color:var(--swc-text-580);"
         "margin-top:0.25rem;"
         "}"
 
@@ -1056,11 +1054,11 @@ def render_player_page(
         "}"
 
         ".player-win-streak-value {"
-        "color:#3fb950;"
+        "color:var(--swc-positive);"
         "}"
 
         ".player-loss-streak-value {"
-        "color:#f85149;"
+        "color:var(--swc-negative);"
         "}"
 
         "@media (max-width:750px) {"
@@ -1245,21 +1243,21 @@ def render_player_page(
                 "font-size:0.76rem;"
                 "font-weight:750;"
                 "letter-spacing:0.04em;"
-                "opacity:0.62;"
+                "color:var(--swc-text-620);"
                 "text-transform:uppercase;"
                 "}"
 
                 ".elo-jump-detail {"
                 "font-size:0.82rem;"
                 "font-weight:650;"
-                "opacity:0.58;"
+                "color:var(--swc-text-580);"
                 "margin-top:0.2rem;"
                 "}"
 
                 ".elo-jump-value {"
                 "font-size:1.45rem;"
                 "font-weight:800;"
-                "color:#5b9bd5;"
+                "color:var(--swc-blue);"
                 "white-space:nowrap;"
                 "}"
 
@@ -1549,7 +1547,7 @@ def render_player_page(
                                         peak_elo_value
                                     ),
                                 "label": (
-                                    f"Peak Elo: "
+                                    f"Tournament-end peak Elo: "
                                     f"{float(peak_elo_value):.1f}"
                                 ),
                             }
@@ -1618,14 +1616,14 @@ def render_player_page(
                 "font-size:0.76rem;"
                 "font-weight:750;"
                 "letter-spacing:0.04em;"
-                "opacity:0.58;"
+                "color:var(--swc-text-580);"
                 "text-transform:uppercase;"
                 "}"
 
                 ".elo-summary-detail {"
                 "font-size:0.82rem;"
                 "font-weight:650;"
-                "opacity:0.58;"
+                "color:var(--swc-text-580);"
                 "margin-top:0.25rem;"
                 "}"
 
@@ -1643,7 +1641,7 @@ def render_player_page(
 
                 ".elo-summary-highlight "
                 ".elo-summary-value {"
-                "color:#f2c94c;"
+                "color:var(--swc-gold);"
                 "}"
 
                 "@media (max-width:650px) {"
@@ -1662,10 +1660,10 @@ def render_player_page(
                 "elo-summary-highlight'>"
                 "<div>"
                 "<div class='elo-summary-label'>"
-                "PEAK ELO"
+                "TOURNAMENT-END PEAK"
                 "</div>"
                 "<div class='elo-summary-detail'>"
-                "Highest career rating"
+                "Highest rating at tournament end"
                 "</div>"
                 "</div>"
                 "<div class='elo-summary-value'>"
@@ -1679,7 +1677,7 @@ def render_player_page(
                 "PEAK REACHED AT"
                 "</div>"
                 "<div class='elo-summary-detail'>"
-                "First tournament at this rating"
+                "First tournament ending at this rating"
                 "</div>"
                 "</div>"
                 "<div class='elo-summary-value'>"
@@ -1703,6 +1701,8 @@ def render_player_page(
             )
 
             st.caption(
+                "Elo is shown at tournament end. The career peak above also "
+                "includes ratings reached after individual sets. "
                 "Dashed segments and hollow points indicate "
                 "tournaments in which the player did not participate."
             )
@@ -2070,14 +2070,14 @@ def render_player_page(
                 "font-size:0.76rem;"
                 "font-weight:750;"
                 "letter-spacing:0.04em;"
-                "opacity:0.58;"
+                "color:var(--swc-text-580);"
                 "text-transform:uppercase;"
                 "}"
 
                 ".rank-summary-detail {"
                 "font-size:0.82rem;"
                 "font-weight:650;"
-                "opacity:0.58;"
+                "color:var(--swc-text-580);"
                 "margin-top:0.25rem;"
                 "}"
 
@@ -2095,7 +2095,7 @@ def render_player_page(
 
                 ".rank-summary-highlight "
                 ".rank-summary-value {"
-                "color:#f2c94c;"
+                "color:var(--swc-gold);"
                 "}"
 
                 "@media (max-width:650px) {"
@@ -2329,7 +2329,7 @@ def render_player_page(
                 ".player-tournament-date {"
                 "font-size:0.82rem;"
                 "font-weight:650;"
-                "opacity:0.58;"
+                "color:var(--swc-text-580);"
                 "margin-top:0.2rem;"
                 "}"
 
@@ -2340,7 +2340,7 @@ def render_player_page(
                 "}"
 
                 ".player-tournament-champion {"
-                "color:#f2c94c;"
+                "color:var(--swc-gold);"
                 "}"
 
                 ".player-tournament-record {"
@@ -2356,7 +2356,7 @@ def render_player_page(
                 "font-size:0.72rem;"
                 "font-weight:700;"
                 "letter-spacing:0.04em;"
-                "opacity:0.52;"
+                "color:var(--swc-text-520);"
                 "text-transform:uppercase;"
                 "margin-top:0.15rem;"
                 "}"
@@ -2369,7 +2369,7 @@ def render_player_page(
                 "font-size:0.7rem;"
                 "font-weight:700;"
                 "letter-spacing:0.04em;"
-                "opacity:0.52;"
+                "color:var(--swc-text-520);"
                 "margin-top:0.18rem;"
                 "}"
 
@@ -2522,7 +2522,7 @@ def render_player_page(
                     result_label = (
                         "Winning record"
                     )
-                    bar_color = "#3fb950"
+                    bar_color = "var(--swc-positive)"
 
                 elif wins < losses:
                     result_class = (
@@ -2531,7 +2531,7 @@ def render_player_page(
                     result_label = (
                         "Losing record"
                     )
-                    bar_color = "#f85149"
+                    bar_color = "var(--swc-negative)"
 
                 else:
                     result_class = (
@@ -2541,7 +2541,7 @@ def render_player_page(
                         "Even record"
                     )
                     bar_color = (
-                        "rgba(255,255,255,0.48)"
+                        "var(--swc-text-480)"
                     )
 
                 progress_width = max(
@@ -2646,15 +2646,15 @@ def render_player_page(
                 "}"
 
                 ".opponent-record-positive {"
-                "color:#3fb950;"
+                "color:var(--swc-positive);"
                 "}"
 
                 ".opponent-record-negative {"
-                "color:#f85149;"
+                "color:var(--swc-negative);"
                 "}"
 
                 ".opponent-record-even {"
-                "color:rgba(255,255,255,0.60);"
+                "color:var(--swc-text-600);"
                 "}"
 
                 ".opponent-record-score,"
@@ -2680,7 +2680,7 @@ def render_player_page(
                 "font-size:0.7rem;"
                 "font-weight:700;"
                 "letter-spacing:0.04em;"
-                "opacity:0.52;"
+                "color:var(--swc-text-520);"
                 "margin-top:0.15rem;"
                 "}"
 
@@ -2770,7 +2770,7 @@ def render_player_page(
                 "background:rgba(128,128,128,0.04);"
                 "font-size:0.78rem;"
                 "font-weight:650;"
-                "opacity:0.58;"
+                "color:var(--swc-text-580);"
                 "}"
 
                 "</style>"

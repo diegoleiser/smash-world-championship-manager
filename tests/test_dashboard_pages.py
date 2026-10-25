@@ -248,7 +248,7 @@ class MatchupsPageBoundaryTests(unittest.TestCase):
         markup = _tournament_recap_html("Alpha won <WC 14>.")
 
         self.assertIn("TOURNAMENT<br>SUMMARY", markup)
-        self.assertIn("background: rgba(28, 74, 112, 0.55)", markup)
+        self.assertIn("background: var(--swc-summary-bg)", markup)
         self.assertIn("grid-template-columns: 9rem", markup)
         self.assertIn("Alpha won &lt;WC 14&gt;.", markup)
         self.assertNotIn("Alpha won <WC 14>.", markup)
@@ -1073,7 +1073,7 @@ class TournamentPageTests(unittest.TestCase):
         self.assertIn("2–1", markup)
         self.assertIn("Winner · <strong>A &amp; B</strong>", markup)
         self.assertIn("Status · <strong>Played</strong>", markup)
-        self.assertIn("rgb(74, 222, 128)", markup)
+        self.assertIn("var(--swc-positive-bright)", markup)
 
     def test_all_matches_rows_preserve_scores_rounds_and_pending_winners(
         self,

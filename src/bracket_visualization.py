@@ -178,23 +178,23 @@ BRACKET_CSS = f"""
 }}
 
 .match-status-pending {{
-    color: #4ade80;
+    color: light-dark(#166534, #4ade80);
     opacity: 1;
 }}
 
 .match-status-completed,
 .match-status-forfeit {{
-    color: #60a5fa;
+    color: light-dark(#1d5c98, #60a5fa);
     opacity: 1;
 }}
 
 .match-status-bye {{
-    color: #c084fc;
+    color: light-dark(#6b21a8, #c084fc);
     opacity: 1;
 }}
 
 .match-status-cancelled {{
-    color: #f87171;
+    color: light-dark(#b42318, #f87171);
     opacity: 1;
 }}
 

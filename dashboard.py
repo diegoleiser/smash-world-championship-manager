@@ -31,8 +31,14 @@ try:
         archived_match_result_html,
         compact_score_input_styles,
     )
+    from dashboard_pages.theme import dashboard_theme_css
     import milestones
     import narratives
+    from narrative_stories import (
+        load_story_archive,
+        player_stories,
+        tournament_stories,
+    )
     import smash_statistics as stats
     import tournament_manager as tournament_manager
     from tournament.archived_bracket import (
@@ -59,6 +65,8 @@ st.set_page_config(
     page_icon="🎮",
     layout="wide",
 )
+
+st.markdown(dashboard_theme_css(), unsafe_allow_html=True)
 
 st.markdown(
     """
@@ -93,6 +101,11 @@ def require_database() -> None:
             "```"
         )
         st.stop()
+
+
+@st.cache_data
+def load_narrative_archive() -> dict[str, Any]:
+    return load_story_archive(DB_PATH)
 
 
 @st.cache_data
@@ -277,6 +290,11 @@ def load_player_insights(player_id: str) -> dict[str, Any]:
     )
 
     return {
+        "stories": player_stories(
+            load_narrative_archive(),
+            next(str(row["display_name"]) for row in players if str(row["player_id"]) == player_id),
+            ranking=load_elo_ranking(True), timeline=timeline,
+        ),
         "favorite": favorite,
         "featured_rivalry": featured_rivalry,
         "nemesis": nemesis,
@@ -440,6 +458,10 @@ def load_tournament_preview_data() -> dict[str, Any]:
                 "streak_type": streak_type,
                 "streak": current_streak,
                 "elo_change_last_three": recent_elo_change,
+                "elo_change_latest": (
+                    float(timeline[-1]["elo_exact"]) - float(timeline[-2]["elo_exact"])
+                    if len(timeline) >= 2 else 0.0
+                ),
             }
         )
 
@@ -491,6 +513,15 @@ def load_tournament_preview_data() -> dict[str, Any]:
                 }
 
     return {
+        "stories": [
+            story
+            for row in ranked_players
+            for story in player_stories(
+                load_narrative_archive(), str(row["player"]),
+                ranking=ranking, timeline=load_player_timeline(str(row["player_id"])),
+            )
+            if story.theme in {"placements", "opponents"}
+        ],
         "ranking": ranked_players,
         "titles": titles,
         "defending_champion": (
@@ -835,6 +866,7 @@ def load_tournament_story_context(
         )
 
     return {
+        "stories": tournament_stories(load_narrative_archive(), tournament_number),
         "previous_tournament": previous_tournament,
         "previous_placements": previous_placements,
         "winner_previous_placement": (
@@ -1292,7 +1324,7 @@ def show_bracket_match_dialog(
                 'grid-template-columns:1fr 1fr;'
                 'gap:2rem;'
                 'margin:-0.75rem 0 1.25rem;'
-                'color:rgba(250,250,250,0.58);'
+                'color:var(--swc-text-580);'
                 'font-size:0.82rem;'
                 '">'
                 '<div style="text-align:right;">'
