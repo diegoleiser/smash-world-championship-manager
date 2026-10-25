@@ -1349,7 +1349,14 @@ def render_player_page(
                 )
 
             elo_segment_df = pd.DataFrame(
-                elo_segment_rows
+                elo_segment_rows,
+                columns=[
+                    "start_tournament",
+                    "end_tournament",
+                    "start_elo",
+                    "end_elo",
+                    "segment_type",
+                ],
             )
 
             peak_row = timeline_df.loc[
@@ -1772,7 +1779,14 @@ def render_player_page(
                 )
 
             rank_segment_df = pd.DataFrame(
-                rank_segment_rows
+                rank_segment_rows,
+                columns=[
+                    "start_tournament",
+                    "end_tournament",
+                    "start_rank",
+                    "end_rank",
+                    "segment_type",
+                ],
             )
 
             best_rank_row = timeline_df.loc[
