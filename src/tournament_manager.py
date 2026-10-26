@@ -109,12 +109,6 @@ from tournament.finalization import (
 )
 
 
-from tournament.legacy_split_bracket import (
-    create_draft_split_bracket_matches,
-    create_draft_split_bracket_routes,
-    seed_draft_split_bracket_matches,
-)
-
 from tournament.bracket_finalization import (
     get_draft_bracket_champion,
     sync_draft_grand_final_reset,
@@ -147,7 +141,6 @@ from tournament.participants import (
     create_player,
     create_player_and_add_to_draft,
     remove_participant,
-    update_participant,
 )
 from tournament.seeding import (
     apply_automatic_seeding,
