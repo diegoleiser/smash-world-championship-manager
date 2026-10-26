@@ -4,13 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-
-def _ordinal(value: int) -> str:
-    if 10 <= value % 100 <= 20:
-        suffix = "th"
-    else:
-        suffix = {1: "st", 2: "nd", 3: "rd"}.get(value % 10, "th")
-    return f"{value}{suffix}"
+from text_format import format_ordinal
 
 
 def finalization_standings_table_data(
@@ -36,7 +30,7 @@ def finalization_standings_table_data(
             (
                 f"{medal_by_placement.get(placement_value, '')} "
                 f"{'T-' if placement_counts[placement_value] > 1 else ''}"
-                f"{_ordinal(placement_value)}"
+                f"{format_ordinal(placement_value)}"
             ).strip(),
             str(placement["player"]),
             f"Seed #{initial_seed}",

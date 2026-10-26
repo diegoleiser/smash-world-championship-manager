@@ -259,6 +259,47 @@ def archived_match_result_html(
     )
 
 
+def versus_header_html(
+    player_1_name: str,
+    player_2_name: str,
+    *,
+    name_size: str,
+    margin: str,
+) -> str:
+    """Return the centered "Player VS Player" heading used in Set editors."""
+
+    def name_html(name: str, align: str) -> str:
+        return (
+            '<div style="'
+            f'text-align:{align};'
+            f'font-size:{name_size};'
+            'font-weight:750;'
+            '">'
+            f'{html.escape(name)}'
+            '</div>'
+        )
+
+    return (
+        '<div style="'
+        'display:grid;'
+        'grid-template-columns:1fr auto 1fr;'
+        'align-items:center;'
+        'gap:1rem;'
+        f'margin:{margin};'
+        '">'
+        + name_html(player_1_name, "right")
+        + '<div style="'
+        'opacity:0.55;'
+        'font-size:0.9rem;'
+        'font-weight:700;'
+        '">'
+        'VS'
+        '</div>'
+        + name_html(player_2_name, "left")
+        + '</div>'
+    )
+
+
 def up_next_matchup_html(
     context_label: str,
     player_1_name: str,

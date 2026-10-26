@@ -30,6 +30,7 @@ try:
     from dashboard_pages.ui_components import (
         archived_match_result_html,
         compact_score_input_styles,
+        versus_header_html,
     )
     from dashboard_pages.theme import dashboard_theme_css
     import milestones
@@ -40,6 +41,7 @@ try:
         tournament_stories,
     )
     import smash_statistics as stats
+    from text_format import format_ordinal
     import tournament_manager as tournament_manager
     from tournament.archived_bracket import (
         archived_match_round_label,
@@ -1201,23 +1203,6 @@ def show_archived_match_dialog(
         )
         st.rerun()
 
-def format_ordinal(value: int) -> str:
-    """Format an integer as an English ordinal."""
-
-    if 10 <= value % 100 <= 20:
-        suffix = "th"
-    else:
-        suffix = {
-            1: "st",
-            2: "nd",
-            3: "rd",
-        }.get(
-            value % 10,
-            "th",
-        )
-
-    return f"{value}{suffix}"
-
 def show_tournaments(include_inactive: bool) -> None:
     """Render the Tournaments page through its focused page module."""
 
@@ -1264,51 +1249,18 @@ def show_bracket_match_dialog(
         ),
     )
 
-    status_display = {
-        "waiting": "Waiting",
-        "pending": "Ready",
-        "completed": "Played",
-        "forfeit": "W–L",
-        "bye": "Bye",
-        "cancelled": "Cancelled",
-    }.get(
-        match_status,
-        match_status.title(),
-    )
+    status_display = bracket_visualization.match_status_label(match_status)
 
     st.markdown(f"### {match_code}")
 
     st.markdown(
         (
-            '<div style="'
-            'display:grid;'
-            'grid-template-columns:1fr auto 1fr;'
-            'align-items:center;'
-            'gap:1rem;'
-            'margin:0.5rem 0 1.25rem 0;'
-            '">'
-            '<div style="'
-            'text-align:right;'
-            'font-size:1.6rem;'
-            'font-weight:750;'
-            '">'
-            f'{html.escape(player_1_name)}'
-            '</div>'
-            '<div style="'
-            'opacity:0.55;'
-            'font-size:0.9rem;'
-            'font-weight:700;'
-            '">'
-            'VS'
-            '</div>'
-            '<div style="'
-            'text-align:left;'
-            'font-size:1.6rem;'
-            'font-weight:750;'
-            '">'
-            f'{html.escape(player_2_name)}'
-            '</div>'
-            '</div>'
+            versus_header_html(
+                player_1_name,
+                player_2_name,
+                name_size="1.6rem",
+                margin="0.5rem 0 1.25rem 0",
+            )
             + (
                 '<div style="'
                 'display:grid;'
