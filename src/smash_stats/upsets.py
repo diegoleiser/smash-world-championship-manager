@@ -11,7 +11,7 @@ from smash_stats.elo_history import calculate_elo_history
 from smash_stats.elo_rules import ELO_K_FACTOR
 
 
-UPSET_MINIMUM_ELO_GAP = 100.0
+UPSET_MINIMUM_ELO_GAP = 150.0
 UPSET_MINIMUM_PRIOR_SETS = 5
 
 

@@ -16,6 +16,11 @@ from dashboard_pages.ui_components import (
     dashboard_table_html,
     selector_card_styles,
 )
+from dashboard_pages.upset_format import (
+    UPSET_CAPTION,
+    tournament_upsets,
+    upset_table,
+)
 from tournament.archived_bracket import (
     archived_match_round_label,
     build_archived_bracket_matches,
@@ -647,6 +652,7 @@ def render_tournaments(
     load_tournament_milestones: Callable[..., list[dict[str, Any]]],
     load_tournament_story_context: Callable[..., dict[str, Any]],
     tournament_elo_changes: Callable[..., list[dict[str, Any]]],
+    load_upsets: Callable[[], list[dict[str, Any]]],
     format_ordinal: Callable[[int], str],
     show_archived_match_dialog: Callable[..., None],
 ) -> None:
@@ -782,6 +788,25 @@ def render_tournaments(
         _tournament_recap_html(tournament_recap),
         unsafe_allow_html=True,
     )
+
+    upsets = tournament_upsets(load_upsets(), int(selected_number))
+    if upsets:
+        st.subheader("⚡ Upsets")
+        st.caption(UPSET_CAPTION)
+        table = upset_table(upsets, include_tournament=False)
+        st.markdown(
+            dashboard_table_html(
+                table["headers"],
+                table["rows"],
+                columns=table["columns"],
+                cell_html=table["cell_html"],
+                mobile_cards=True,
+                mobile_card_variant="upsets",
+                mobile_visible_rows=3,
+                mobile_summary="Show all upsets",
+            ),
+            unsafe_allow_html=True,
+        )
 
     tab_labels = []
     if group_tables:

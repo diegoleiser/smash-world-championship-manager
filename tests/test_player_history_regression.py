@@ -46,6 +46,7 @@ class PlayerHistoryRegressionTests(unittest.TestCase):
                             "opponents": [],
                         },
                         load_elo_ranking=lambda _: [],
+                        load_upsets=lambda: [],
                         format_ordinal=str,
                     )
                 charts = [call.args[0].to_dict() for call in ui.altair_chart.call_args_list]

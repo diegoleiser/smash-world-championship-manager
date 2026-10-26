@@ -239,6 +239,7 @@ class MatchupsPageBoundaryTests(unittest.TestCase):
                 "load_tournament_milestones",
                 "load_tournament_story_context",
                 "tournament_elo_changes",
+                "load_upsets",
                 "format_ordinal",
                 "show_archived_match_dialog",
             },
@@ -294,6 +295,7 @@ class MatchupsPageBoundaryTests(unittest.TestCase):
                 "load_player_timeline",
                 "load_tournaments",
                 "load_database_quality",
+                "load_upsets",
             },
         )
 
@@ -309,6 +311,7 @@ class MatchupsPageBoundaryTests(unittest.TestCase):
                 "load_player_history",
                 "load_player_insights",
                 "load_elo_ranking",
+                "load_upsets",
                 "format_ordinal",
             },
         )
@@ -447,6 +450,62 @@ class TournamentControlCenterTests(unittest.TestCase):
         self.assertIn("A &amp; &lt;B&gt;", markup)
         with self.assertRaises(ValueError):
             internal_dashboard_link("Unsafe", "https://example.com")
+
+    def test_upset_table_has_a_compact_mobile_card_variant(self) -> None:
+        markup = dashboard_table_html(
+            ["Set", "Elo Gap"],
+            [["Alpha vs Beta", "+312.3"]],
+            columns="1fr 1fr",
+            mobile_cards=True,
+            mobile_card_variant="upsets",
+        )
+
+        self.assertIn("control-table-mobile-cards control-table-mobile-upsets", markup)
+        self.assertIn(
+            '.control-table-mobile-upsets\n            .control-table-cell[data-label="Set"]',
+            markup,
+        )
+
+    def test_dashboard_table_accepts_ready_cell_markup(self) -> None:
+        markup = dashboard_table_html(
+            ["Set", "Score"],
+            [["Alpha vs Beta", "2–0"]],
+            columns="1fr 1fr",
+            cell_html={(0, 0): "<strong>Alpha</strong> vs Beta"},
+        )
+
+        body = markup.split("</style>")[1]
+        self.assertIn('data-label="Set"><strong>Alpha</strong> vs Beta</div>', body)
+        self.assertIn('data-label="Score">2–0</div>', body)
+
+    def test_dashboard_table_reveals_remaining_rows_in_place(self) -> None:
+        rows = [[f"Player {index}"] for index in range(4)]
+
+        markup = dashboard_table_html(
+            ["Player"],
+            rows,
+            columns="1fr",
+            visible_rows=2,
+            more_summary="Show all 4 players",
+        )
+
+        body = markup.split("</style>")[1]
+        visible, hidden = body.split('<details class="control-table-more">')
+        self.assertIn("Player 1", visible)
+        self.assertNotIn("Player 2", visible)
+        self.assertIn('<div class="control-table-more-rows">', hidden)
+        self.assertIn("Player 2", hidden)
+        self.assertIn("Player 3", hidden)
+        self.assertNotIn("Player 0", hidden)
+        self.assertIn("Show all 4 players", hidden)
+        self.assertIn("Show less", hidden)
+
+        all_visible = dashboard_table_html(["Player"], rows, columns="1fr", visible_rows=4)
+        self.assertNotIn('<details class="control-table-more">', all_visible)
+
+        for bad_arguments in ({"visible_rows": 0}, {"visible_rows": 2, "mobile_visible_rows": 2}):
+            with self.subTest(arguments=bad_arguments), self.assertRaises(ValueError):
+                dashboard_table_html(["Player"], rows, columns="1fr", **bad_arguments)
 
     def test_dashboard_table_supports_opt_in_mobile_cards(self) -> None:
         markup = dashboard_table_html(

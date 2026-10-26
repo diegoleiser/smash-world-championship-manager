@@ -18,6 +18,11 @@ from dashboard_pages.timeline_order import (
     chronological_tournament_labels,
 )
 from dashboard_pages.ui_components import dashboard_table_html
+from dashboard_pages.upset_format import (
+    UPSET_CAPTION,
+    upset_table,
+    upsets_with_top_first,
+)
 
 
 def render_home(
@@ -28,6 +33,7 @@ def render_home(
     load_player_timeline: Callable[..., list[dict[str, Any]]],
     load_tournaments: Callable[..., list[dict[str, Any]]],
     load_database_quality: Callable[..., dict[str, Any]],
+    load_upsets: Callable[[], list[dict[str, Any]]],
 ) -> None:
     st.title("🎮 Smash World Championship")
     st.caption(
@@ -1263,6 +1269,9 @@ def render_home(
         )
 
     st.divider()
+    _render_biggest_upsets(load_upsets())
+
+    st.divider()
     st.subheader(
         "🏆 Tournament Overview"
     )
@@ -1414,3 +1423,30 @@ def render_home(
         st.info(
             "No tournaments are available yet."
         )
+
+
+def _render_biggest_upsets(upsets: list[dict[str, Any]]) -> None:
+    """Show the top upsets (one per pairing); the rest open below them."""
+
+    st.subheader("⚡ Biggest Upsets")
+    st.caption(UPSET_CAPTION)
+
+    if not upsets:
+        st.info("No upsets have been recorded yet.")
+        return
+
+    ordered, top_count = upsets_with_top_first(upsets)
+    table = upset_table(ordered)
+    st.markdown(
+        dashboard_table_html(
+            table["headers"],
+            table["rows"],
+            columns=table["columns"],
+            cell_html=table["cell_html"],
+            mobile_cards=True,
+            mobile_card_variant="upsets",
+            visible_rows=top_count,
+            more_summary=f"Show all {len(upsets)} upsets",
+        ),
+        unsafe_allow_html=True,
+    )
