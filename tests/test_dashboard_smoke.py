@@ -12,6 +12,7 @@ import shutil
 import sqlite3
 import sys
 import tempfile
+import textwrap
 import unittest
 from contextlib import redirect_stdout
 from io import StringIO
@@ -206,7 +207,8 @@ class DashboardSmokeTests(unittest.TestCase):
         upset_tables = [
             element.value
             for element in home.markdown
-            if 'data-label="Elo Gap"' in element.value.split("</style>")[-1]
+            if element.value.startswith('<div class="control-table-scroll">')
+            and 'data-label="Elo Gap"' in element.value
         ]
         self.assertTrue(upset_tables)
         self.assertIn("/players?player_id=halo", upset_tables[0])
@@ -244,6 +246,23 @@ class DashboardSmokeTests(unittest.TestCase):
         self.assertIn('<header class="hof-card-title">Most Titles</header>', card_grids[0])
         self.assertIn("/players?player_id=", card_grids[0])
         self.assertNotIn("Losing Streak", "".join(card_grids))
+
+    def test_table_styles_are_loaded_once_per_page(self) -> None:
+        app = self.run_app()
+        markdown = [element.value for element in app.markdown]
+        style_blocks = [
+            value for value in markdown if ".control-table-header {" in value
+        ]
+
+        # st.markdown dedents its body; mixing differently indented style
+        # sheets in one call turns the table styles into a code block.
+        self.assertEqual(len(style_blocks), 1)
+        self.assertTrue(textwrap.dedent(style_blocks[0]).strip().startswith("<style>"))
+        self.assertNotIn(".stApp {", style_blocks[0])
+        self.assertGreater(
+            sum('class="control-table-scroll"' in value for value in markdown),
+            1,
+        )
 
     def test_matchup_comparison_renders_for_selected_matrix_cell(self) -> None:
         app = self.run_app(page="Matchups")

@@ -438,6 +438,9 @@ def dashboard_table_html(
 ) -> str:
     """Return markup for a compact table in the dashboard visual language.
 
+    The table relies on ``dashboard_table_styles()``, which the dashboard
+    loads once per page.
+
     ``visible_rows`` keeps only the first rows visible on every screen size;
     the remaining rows open in place below them via ``more_summary``.
     ``cell_html`` replaces single cells with ready markup; callers escape any
@@ -581,7 +584,24 @@ def dashboard_table_html(
         table_classes += f" control-table-mobile-{mobile_card_variant}"
 
     return (
-        """
+        '<div class="control-table-scroll">'
+        f'<div class="{table_classes}" '
+        f'style="--control-table-columns:{html.escape(columns)};">'
+        f'<div class="control-table-header">{header_html}</div>'
+        f"{''.join(row_html)}"
+        f"{more_html}"
+        f"{mobile_more_html}"
+        "</div></div>"
+    )
+
+
+def dashboard_table_styles() -> str:
+    """Return the shared style sheet for dashboard_table_html markup.
+
+    The dashboard injects it once per page run, so tables do not repeat it.
+    """
+
+    return """
         <style>
         .control-table {
             overflow: hidden;
@@ -1548,16 +1568,7 @@ def dashboard_table_html(
             }
         }
         </style>
-        """
-        '<div class="control-table-scroll">'
-        f'<div class="{table_classes}" '
-        f'style="--control-table-columns:{html.escape(columns)};">'
-        f'<div class="control-table-header">{header_html}</div>'
-        f"{''.join(row_html)}"
-        f"{more_html}"
-        f"{mobile_more_html}"
-        "</div></div>"
-    )
+    """
 
 
 def clickable_card_button_styles(
