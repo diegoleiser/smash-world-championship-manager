@@ -332,6 +332,56 @@ class DashboardNarrativeConsistencyTests(unittest.TestCase):
         self.assertIn("1 recorded set; 1 set was decided", summary)
         self.assertNotIn(", with Gamma finishing third", summary)
 
+    def _upset_recap(self, *, biggest_upset=None, walkover=False):
+        """Gamma beats Alpha although Alpha had more Elo before the tournament."""
+
+        return narratives.generate_tournament_summary(
+            {"tournament_number": 14, "winner": "Gamma"},
+            [
+                {"player": "Gamma", "placement": 1},
+                {"player": "Alpha", "placement": 2},
+            ],
+            [
+                {
+                    "stage": "knockout",
+                    "winner": "Gamma",
+                    "player_1": "Alpha",
+                    "player_2": "Gamma",
+                    "player_1_score": None if walkover else 1,
+                    "player_2_score": None if walkover else 3,
+                    "score_known": not walkover,
+                    "walkover": walkover,
+                }
+            ],
+            [
+                {"Players": "Gamma", "Elo Before": 1000.0, "Elo Change": 30.0},
+                {"Players": "Alpha", "Elo Before": 1300.0, "Elo Change": -30.0},
+            ],
+            winner_title_number=1,
+            biggest_upset=biggest_upset,
+        )
+
+    def test_tournament_recap_names_the_shared_biggest_upset(self) -> None:
+        summary = self._upset_recap(
+            biggest_upset={"winner": "Gamma", "loser": "Alpha", "elo_gap": 187.25},
+        )
+
+        self.assertIn(
+            "The biggest Elo upset came when Gamma defeated Alpha despite a "
+            "187.2-point rating gap.",
+            summary,
+        )
+
+    def test_tournament_recap_has_no_upset_sentence_without_a_shared_upset(self) -> None:
+        # The old recap compared Elo before the tournament and would have
+        # reported these wins, including the forfeit, as upsets.
+        for walkover in (False, True):
+            with self.subTest(walkover=walkover):
+                self.assertNotIn(
+                    "biggest Elo upset",
+                    self._upset_recap(walkover=walkover),
+                )
+
     def test_tournament_recap_explains_missing_archive_details(self) -> None:
         summary = narratives.generate_tournament_summary(
             {"tournament_number": 3, "winner": "Drew"},

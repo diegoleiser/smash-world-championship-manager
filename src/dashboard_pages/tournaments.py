@@ -764,6 +764,7 @@ def render_tournaments(
         selected_tournament_number,
     )
 
+    upsets = tournament_upsets(load_upsets(), int(selected_number))
     tournament_recap = narratives.generate_tournament_summary(
         tournament,
         participants,
@@ -773,6 +774,7 @@ def render_tournaments(
         defending_champion=defending_champion,
         milestones=tournament_milestones,
         story_context=tournament_story_context,
+        biggest_upset=upsets[0] if upsets else None,
     )
 
     st.markdown(
@@ -789,7 +791,6 @@ def render_tournaments(
         unsafe_allow_html=True,
     )
 
-    upsets = tournament_upsets(load_upsets(), int(selected_number))
     if upsets:
         st.subheader("⚡ Upsets")
         st.caption(UPSET_CAPTION)
