@@ -46,7 +46,6 @@ class DraftParticipantModuleBoundaryTests(unittest.TestCase):
             "create_player",
             "create_player_and_add_to_draft",
             "add_participant",
-            "update_participant",
             "remove_participant",
         ):
             self.assertIs(

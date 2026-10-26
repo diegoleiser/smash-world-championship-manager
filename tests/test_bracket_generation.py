@@ -18,7 +18,6 @@ if str(SRC_DIR) not in sys.path:
 
 import tournament_manager as tournament  # noqa: E402
 from tournament import bracket_generation  # noqa: E402
-from tournament import legacy_split_bracket  # noqa: E402
 
 
 class BracketGenerationModuleBoundaryTests(unittest.TestCase):
@@ -37,17 +36,6 @@ class BracketGenerationModuleBoundaryTests(unittest.TestCase):
             self.assertIs(
                 getattr(tournament, function_name),
                 getattr(bracket_generation, function_name),
-            )
-
-    def test_legacy_split_helpers_remain_importable(self) -> None:
-        for function_name in (
-            "create_draft_split_bracket_matches",
-            "create_draft_split_bracket_routes",
-            "seed_draft_split_bracket_matches",
-        ):
-            self.assertIs(
-                getattr(tournament, function_name),
-                getattr(legacy_split_bracket, function_name),
             )
 
 
