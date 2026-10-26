@@ -38,6 +38,12 @@ from smash_stats.common import (
 )
 from smash_stats.rankings import get_ranking, print_ranking
 from smash_stats.records import get_smash_records, print_smash_records
+from smash_stats.upsets import (
+    UPSET_MINIMUM_ELO_GAP,
+    UPSET_MINIMUM_PRIOR_SETS,
+    find_upsets,
+    get_upsets,
+)
 from smash_stats.head_to_head import (
     get_all_head_to_heads,
     get_head_to_head,
@@ -394,69 +400,32 @@ def get_biggest_upsets(
     limit: int = 10,
     k_factor: float = ELO_K_FACTOR,
 ) -> list[dict[str, Any]]:
-    """Returns the biggest upsets by Elo gain."""
+    """Returns the biggest upsets by Elo gap before the Set."""
 
-    if limit <= 0:
-        raise ValueError("limit must be greater than zero.")
-
-    history = calculate_elo_history(
+    return get_upsets(
         db_path,
+        limit=limit,
         k_factor=k_factor,
     )
-
-    upsets = [
-        {
-            "rank": 0,
-            "match_id": event["match_id"],
-            "tournament_number": event["tournament_number"],
-            "tournament_date": event["tournament_date"],
-            "stage": event["stage"],
-            "round_label": event["round_label"],
-            "winner": event["winner"],
-            "loser": event["loser"],
-            "winner_elo_before": event["winner_rating_before"],
-            "loser_elo_before": event["loser_rating_before"],
-            "elo_difference_before": round(
-                float(event["loser_rating_before"])
-                - float(event["winner_rating_before"]),
-                1,
-            ),
-            "elo_gain": round(float(event["rating_change"]), 1),
-            "winner_score": event["winner_score"],
-            "loser_score": event["loser_score"],
-        }
-        for event in history
-    ]
-
-    upsets.sort(
-        key=lambda event: (
-            -event["elo_gain"],
-            -event["elo_difference_before"],
-            event["tournament_number"],
-            event["match_id"],
-        )
-    )
-
-    selected = upsets[:limit]
-    for rank, event in enumerate(selected, start=1):
-        event["rank"] = rank
-
-    return selected
 
 
 def print_biggest_upsets(upsets: list[dict[str, Any]]) -> None:
     """Prints the biggest Elo upsets as a table."""
 
     print("\nBiggest Elo Upsets")
-    print("=" * 94)
+    print("=" * 102)
 
     if not upsets:
-        print("No rated matches found.")
+        print(
+            "No upsets found "
+            f"(at least {UPSET_MINIMUM_ELO_GAP:.0f} Elo gap, winner with "
+            f"{UPSET_MINIMUM_PRIOR_SETS}+ rated Sets before)."
+        )
         return
 
     header = (
         f"{'Rank':>4} {'WC':>4} {'Winner':<16} {'Loser':<16} "
-        f"{'Score':>7} {'Elo Before':>20} {'Gain':>8}"
+        f"{'Score':>7} {'Elo Before':>20} {'Gap':>7} {'Gain':>8}"
     )
     print(header)
     print("-" * len(header))
@@ -478,6 +447,7 @@ def print_biggest_upsets(upsets: list[dict[str, Any]]) -> None:
             f"{event['loser']:<16} "
             f"{score:>7} "
             f"{before:>20} "
+            f"{event['elo_gap']:>7.1f} "
             f"{event['elo_gain']:>+8.1f}"
         )
 
