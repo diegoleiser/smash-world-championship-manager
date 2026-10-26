@@ -110,7 +110,7 @@ class SelectorCardStylesTests(unittest.TestCase):
             player.replace("player_profile_selector", "KEY").replace("1.4rem", "SIZE"),
             tournament.replace("archived_tournament_selector", "KEY").replace("1.75rem", "SIZE"),
         )
-        self.assertEqual(player.count('div[class*="st-key-player_profile_selector"]'), 10)
+        self.assertEqual(player.count('div[class*="st-key-player_profile_selector"]'), 6)
         self.assertIn("font-size: 1.4rem !important;", player)
         for leftover in ("{{", "}}", "{container_key}", "{value_font_size}"):
             self.assertNotIn(leftover, player)
