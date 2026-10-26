@@ -169,6 +169,13 @@ def load_player_history(player_id: str) -> list[dict[str, Any]]:
 
 
 @st.cache_data
+def load_upsets() -> list[dict[str, Any]]:
+    """Loads all archive upsets, biggest Elo gap first."""
+
+    return stats.get_upsets(DB_PATH)
+
+
+@st.cache_data
 def load_head_to_head(
     player_a_id: str,
     player_b_id: str,
@@ -1024,6 +1031,7 @@ def show_home(include_inactive: bool) -> None:
         load_player_timeline=load_player_timeline,
         load_tournaments=load_tournaments,
         load_database_quality=load_database_quality,
+        load_upsets=load_upsets,
     )
 
 
@@ -1104,6 +1112,7 @@ def show_player_page(include_inactive: bool) -> None:
         load_player_history=load_player_history,
         load_player_insights=load_player_insights,
         load_elo_ranking=load_elo_ranking,
+        load_upsets=load_upsets,
         format_ordinal=format_ordinal,
     )
 
@@ -1213,6 +1222,7 @@ def show_tournaments(include_inactive: bool) -> None:
         load_tournament_milestones=load_tournament_milestones,
         load_tournament_story_context=load_tournament_story_context,
         tournament_elo_changes=tournament_elo_changes,
+        load_upsets=load_upsets,
         format_ordinal=format_ordinal,
         show_archived_match_dialog=show_archived_match_dialog,
     )

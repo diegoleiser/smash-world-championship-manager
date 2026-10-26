@@ -428,15 +428,25 @@ def dashboard_table_html(
     row_highlights: dict[int, str] | None = None,
     emphasis_column: int | None = None,
     cell_links: dict[tuple[int, int], str] | None = None,
+    cell_html: dict[tuple[int, int], str] | None = None,
     mobile_cards: bool = False,
     mobile_visible_rows: int | None = None,
     mobile_summary: str = "Show all",
     mobile_card_variant: str | None = None,
+    visible_rows: int | None = None,
+    more_summary: str = "Show all",
 ) -> str:
-    """Return markup for a compact table in the dashboard visual language."""
+    """Return markup for a compact table in the dashboard visual language.
+
+    ``visible_rows`` keeps only the first rows visible on every screen size;
+    the remaining rows open in place below them via ``more_summary``.
+    ``cell_html`` replaces single cells with ready markup; callers escape any
+    text in it themselves.
+    """
 
     row_highlights = row_highlights or {}
     cell_links = cell_links or {}
+    cell_html = cell_html or {}
     header_html = "".join(
         f"<div>{html.escape(header)}</div>" for header in headers
     )
@@ -474,6 +484,8 @@ def dashboard_table_html(
                         "Dashboard table links must be internal query URLs."
                     )
                 cell_content = internal_dashboard_link(value_text, link_text)
+            if (row_index, column_index) in cell_html:
+                cell_content = cell_html[(row_index, column_index)]
             cells.append(
                 f'<div class="control-table-cell{emphasis_class}'
                 f'{movement_class}" '
@@ -498,6 +510,26 @@ def dashboard_table_html(
 
     if mobile_visible_rows is not None and mobile_visible_rows < 1:
         raise ValueError("Mobile visible rows must be positive.")
+    if visible_rows is not None and visible_rows < 1:
+        raise ValueError("Visible rows must be positive.")
+    if visible_rows is not None and mobile_visible_rows is not None:
+        raise ValueError("Use either visible_rows or mobile_visible_rows.")
+    more_html = (
+        '<details class="control-table-more">'
+        "<summary>"
+        '<span class="control-table-show-more">'
+        f"{html.escape(more_summary)}"
+        "</span>"
+        '<span class="control-table-show-less">Show less</span>'
+        "</summary>"
+        '<div class="control-table-more-rows">'
+        f"{''.join(row_html[visible_rows:])}"
+        "</div></details>"
+        if visible_rows is not None and len(row_html) > visible_rows
+        else ""
+    )
+    if more_html:
+        row_html = row_html[:visible_rows]
     if mobile_card_variant not in {
         None,
         "ranking",
@@ -518,6 +550,7 @@ def dashboard_table_html(
         "final-placements",
         "title-forecast",
         "participants",
+        "upsets",
     }:
         raise ValueError("Unknown mobile card variant.")
     hidden_mobile_rows = (
@@ -607,6 +640,29 @@ def dashboard_table_html(
             color: var(--swc-text);
             font-size: 1.02rem;
             font-weight: 800;
+        }
+        .control-table-strong {
+            color: var(--swc-text);
+            font-weight: 800;
+        }
+        .control-table-regular {
+            font-weight: 500;
+        }
+        .control-table-muted {
+            color: var(--swc-text-580);
+            font-size: 0.92em;
+            font-weight: 600;
+        }
+        .control-table-nowrap {
+            white-space: nowrap;
+        }
+        .control-table-subline {
+            display: block;
+            margin-top: 0.15rem;
+            color: var(--swc-text-580);
+            font-size: 0.78rem;
+            font-weight: 600;
+            line-height: 1.3;
         }
         .control-table-link,
         .control-table-link:link,
@@ -1402,6 +1458,90 @@ def dashboard_table_html(
                 text-align:right;
             }
         }
+        .control-table-more summary {
+            display: flex;
+            justify-content: center;
+            padding: 0.65rem 1rem;
+            background: rgba(128, 128, 128, 0.035);
+            color: var(--swc-text-760);
+            font-size: 0.82rem;
+            font-weight: 750;
+            cursor: pointer;
+            list-style: none;
+        }
+        .control-table-more summary::-webkit-details-marker {
+            display: none;
+        }
+        .control-table-more summary:hover {
+            background: rgba(128, 128, 128, 0.075);
+        }
+        .control-table-more[open] {
+            display: flex;
+            flex-direction: column;
+        }
+        .control-table-more[open] summary {
+            order: 2;
+            border-top: 1px solid rgba(128, 128, 128, 0.20);
+        }
+        .control-table-more .control-table-show-less,
+        .control-table-more[open] .control-table-show-more {
+            display: none;
+        }
+        .control-table-more[open] .control-table-show-less {
+            display: inline;
+        }
+        @media (max-width: 700px) {
+            .control-table-mobile-cards .control-table-more summary {
+                justify-content: flex-start;
+                padding: 0.9rem 1rem;
+                border: 1px solid rgba(128, 128, 128, 0.30);
+                border-radius: 0.8rem;
+                background: rgba(128, 128, 128, 0.055);
+                color: var(--swc-text-820);
+                font-size: 0.86rem;
+            }
+            .control-table-mobile-cards .control-table-more[open] summary {
+                margin-top: 0.75rem;
+            }
+        }
+        @media (max-width: 700px) {
+            .control-table-mobile-upsets .control-table-row {
+                grid-template-columns: minmax(0, 1fr) auto;
+                align-items: start;
+                gap: 0.6rem 1rem;
+                padding: 0.95rem 1rem;
+            }
+            .control-table-mobile-upsets
+            .control-table-cell[data-label="Set"] {
+                grid-column: 1 / 2;
+                grid-row: 1 / 2;
+                font-size: 1.05rem;
+                line-height: 1.35;
+            }
+            .control-table-mobile-upsets
+            .control-table-cell[data-label="Elo Gap"] {
+                grid-column: 2 / 3;
+                grid-row: 1 / 2;
+                align-items: flex-end;
+                text-align: right;
+                font-size: 1.15rem;
+                font-weight: 800;
+            }
+            .control-table-mobile-upsets
+            .control-table-cell[data-label="Tournament"],
+            .control-table-mobile-upsets
+            .control-table-cell[data-label="Phase"] {
+                grid-column: 1 / 2;
+                grid-row: 2 / 3;
+            }
+            .control-table-mobile-upsets
+            .control-table-cell[data-label="Score"] {
+                grid-column: 2 / 3;
+                grid-row: 2 / 3;
+                align-items: flex-end;
+                text-align: right;
+            }
+        }
         @media (min-width: 701px) {
             .control-table-mobile-more {
                 display: none;
@@ -1414,6 +1554,7 @@ def dashboard_table_html(
         f'style="--control-table-columns:{html.escape(columns)};">'
         f'<div class="control-table-header">{header_html}</div>'
         f"{''.join(row_html)}"
+        f"{more_html}"
         f"{mobile_more_html}"
         "</div></div>"
     )

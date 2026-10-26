@@ -73,7 +73,7 @@ def warm_up(winner: str, count: int = 5, start: int = 1) -> list[dict]:
 class FindUpsetsTests(unittest.TestCase):
     def test_upset_fields_use_elo_before_the_set(self) -> None:
         history = warm_up("alpha") + [
-            rated_set(6, "alpha", "beta", 950.25, 1080.75, score=(3, 2)),
+            rated_set(6, "alpha", "beta", 950.25, 1110.75, score=(3, 2)),
         ]
 
         [upset] = find_upsets(history)
@@ -87,7 +87,7 @@ class FindUpsetsTests(unittest.TestCase):
             {
                 "rank": 1, "match_id": "m6", "winner_id": "alpha", "winner": "Alpha",
                 "loser_id": "beta", "loser": "Beta", "winner_elo_before": 950.2,
-                "loser_elo_before": 1080.8, "elo_gap": 130.5, "elo_gain": 20.0,
+                "loser_elo_before": 1110.8, "elo_gap": 160.5, "elo_gain": 20.0,
                 "winner_score": 3, "loser_score": 2, "score_known": True,
             },
         )
@@ -99,8 +99,8 @@ class FindUpsetsTests(unittest.TestCase):
 
     def test_gap_threshold_is_inclusive(self) -> None:
         history = warm_up("alpha") + [
-            rated_set(6, "alpha", "beta", 1000.0, 1100.0),
-            rated_set(7, "alpha", "gamma", 1000.0, 1099.99),
+            rated_set(6, "alpha", "beta", 1000.0, 1150.0),
+            rated_set(7, "alpha", "gamma", 1000.0, 1149.99),
         ]
 
         self.assertEqual([upset["match_id"] for upset in find_upsets(history)], ["m6"])
@@ -264,7 +264,7 @@ class UpsetDatabaseTests(unittest.TestCase):
         ):
             statistics.main()
 
-        self.assertIn("No upsets found (at least 100 Elo gap", output.getvalue())
+        self.assertIn("No upsets found (at least 150 Elo gap", output.getvalue())
 
 
 class UpsetModuleBoundaryTests(unittest.TestCase):

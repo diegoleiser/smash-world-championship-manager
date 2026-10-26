@@ -18,6 +18,10 @@ from dashboard_pages.ui_components import (
     internal_dashboard_link,
     selector_card_styles,
 )
+from dashboard_pages.upset_format import (
+    player_upset_wins,
+    upset_elo_before_text,
+)
 
 
 def player_initials(name: str) -> str:
@@ -35,6 +39,76 @@ def _player_selector_styles() -> str:
     """Return the shared card language for the player selector."""
 
     return selector_card_styles("player_profile_selector", "1.4rem")
+
+
+def _highlight_card_html(label: str, detail_html: str, value_text: str) -> str:
+    """Return a full-width highlight card (label, detail markup, value)."""
+
+    return (
+        "<style>"
+
+        ".elo-jump-highlight {"
+        "display:flex;"
+        "align-items:center;"
+        "justify-content:space-between;"
+        "gap:1rem;"
+        "padding:0.9rem 1.1rem;"
+        "margin:0.35rem 0 1rem 0;"
+        "border:1px solid rgba(70,150,220,0.24);"
+        "border-radius:0.8rem;"
+        "background:rgba(70,150,220,0.045);"
+        "}"
+
+        ".elo-jump-label {"
+        "font-size:0.76rem;"
+        "font-weight:750;"
+        "letter-spacing:0.04em;"
+        "color:var(--swc-text-620);"
+        "text-transform:uppercase;"
+        "}"
+
+        ".elo-jump-detail {"
+        "font-size:0.82rem;"
+        "font-weight:650;"
+        "color:var(--swc-text-580);"
+        "margin-top:0.2rem;"
+        "}"
+
+        ".elo-jump-value {"
+        "font-size:1.45rem;"
+        "font-weight:800;"
+        "color:var(--swc-blue);"
+        "white-space:nowrap;"
+        "}"
+
+        "@media (max-width:560px) {"
+
+        ".elo-jump-highlight {"
+        "align-items:flex-start;"
+        "flex-direction:column;"
+        "}"
+
+        "}"
+
+        "</style>"
+
+        "<div class='elo-jump-highlight'>"
+
+        "<div>"
+        "<div class='elo-jump-label'>"
+        f"{label}"
+        "</div>"
+        "<div class='elo-jump-detail'>"
+        f"{detail_html}"
+        "</div>"
+        "</div>"
+
+        "<div class='elo-jump-value'>"
+        f"{html.escape(value_text)}"
+        "</div>"
+
+        "</div>"
+    )
 
 
 def _summary_pair_html(
@@ -272,6 +346,7 @@ def render_player_page(
     load_player_history: Callable[..., list[dict[str, Any]]],
     load_player_insights: Callable[..., dict[str, Any]],
     load_elo_ranking: Callable[..., list[dict[str, Any]]],
+    load_upsets: Callable[[], list[dict[str, Any]]],
     format_ordinal: Callable[[int], str],
 ) -> None:
     st.title("👤 Player profile")
@@ -1283,70 +1358,10 @@ def render_player_page(
                 class_name="player-profile-link",
             )
 
-            elo_jump_html = (
-                "<style>"
-
-                ".elo-jump-highlight {"
-                "display:flex;"
-                "align-items:center;"
-                "justify-content:space-between;"
-                "gap:1rem;"
-                "padding:0.9rem 1.1rem;"
-                "margin:0.35rem 0 1rem 0;"
-                "border:1px solid rgba(70,150,220,0.24);"
-                "border-radius:0.8rem;"
-                "background:rgba(70,150,220,0.045);"
-                "}"
-
-                ".elo-jump-label {"
-                "font-size:0.76rem;"
-                "font-weight:750;"
-                "letter-spacing:0.04em;"
-                "color:var(--swc-text-620);"
-                "text-transform:uppercase;"
-                "}"
-
-                ".elo-jump-detail {"
-                "font-size:0.82rem;"
-                "font-weight:650;"
-                "color:var(--swc-text-580);"
-                "margin-top:0.2rem;"
-                "}"
-
-                ".elo-jump-value {"
-                "font-size:1.45rem;"
-                "font-weight:800;"
-                "color:var(--swc-blue);"
-                "white-space:nowrap;"
-                "}"
-
-                "@media (max-width:560px) {"
-
-                ".elo-jump-highlight {"
-                "align-items:flex-start;"
-                "flex-direction:column;"
-                "}"
-
-                "}"
-
-                "</style>"
-
-                "<div class='elo-jump-highlight'>"
-
-                "<div>"
-                "<div class='elo-jump-label'>"
-                "BIGGEST ELO JUMP"
-                "</div>"
-                "<div class='elo-jump-detail'>"
-                f"Recorded at {jump_tournament_html}"
-                "</div>"
-                "</div>"
-
-                "<div class='elo-jump-value'>"
-                f"{change:+.1f}"
-                "</div>"
-
-                "</div>"
+            elo_jump_html = _highlight_card_html(
+                "BIGGEST ELO JUMP",
+                f"Recorded at {jump_tournament_html}",
+                f"{change:+.1f}",
             )
 
             st.markdown(
@@ -1354,8 +1369,33 @@ def render_player_page(
                 unsafe_allow_html=True,
             )
 
-
-
+        upset_wins = player_upset_wins(load_upsets(), player_id)
+        if upset_wins:
+            biggest_upset = upset_wins[0]
+            loser_html = internal_dashboard_link(
+                str(biggest_upset["loser"]),
+                player_profile_url(str(biggest_upset["loser_id"])),
+                class_name="player-profile-link",
+            )
+            upset_tournament_html = internal_dashboard_link(
+                f"WC {int(biggest_upset['tournament_number']):02d}",
+                tournament_archive_url(int(biggest_upset["tournament_number"])),
+                class_name="player-profile-link",
+            )
+            upset_count = (
+                "1 upset win"
+                if len(upset_wins) == 1
+                else f"{len(upset_wins)} upset wins"
+            )
+            st.markdown(
+                _highlight_card_html(
+                    "BIGGEST UPSET WIN",
+                    f"Beat {loser_html} at {upset_tournament_html} · "
+                    f"Elo {upset_elo_before_text(biggest_upset)} · {upset_count}",
+                    f"+{float(biggest_upset['elo_gap']):.1f} Elo",
+                ),
+                unsafe_allow_html=True,
+            )
 
         if timeline:
             timeline_df = (

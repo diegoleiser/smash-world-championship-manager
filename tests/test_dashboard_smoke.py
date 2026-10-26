@@ -9,6 +9,7 @@ database. The private ``data/smash_wm.db`` is never opened.
 from __future__ import annotations
 
 import shutil
+import sqlite3
 import sys
 import tempfile
 import unittest
@@ -31,9 +32,11 @@ except ImportError:  # pragma: no cover - dashboard dependencies missing
 
 from create_demo_database import create_demo_database  # noqa: E402
 import tournament_manager as tournament  # noqa: E402
+from smash_stats.upsets import get_upsets  # noqa: E402
 
 
 GROUP_DRAFT_NUMBER = 6
+UPSET_TOURNAMENT_NUMBER = 7
 GROUP_PLAYERS = ("atlas", "blaze", "comet", "drift", "echo", "flux")
 PAGE_TITLES = {
     "": "🎮 Smash World Championship",
@@ -43,6 +46,42 @@ PAGE_TITLES = {
     "Tournament Manager": "🛠 Tournament Manager",
     "Monte Carlo": "Monte Carlo",
 }
+
+
+def _add_upset_tournament(db_path: Path) -> None:
+    """Archive a synthetic event in which Halo upsets Atlas after six losses."""
+
+    with sqlite3.connect(db_path) as connection, connection:
+        connection.execute(
+            """
+            INSERT INTO tournaments (
+                tournament_id, tournament_number, tournament_date, winner_id,
+                bracket_source, match_data_available
+            )
+            VALUES ('wc_07_upset', ?, '2027-01-15', 'halo', 'manual', 1)
+            """,
+            (UPSET_TOURNAMENT_NUMBER,),
+        )
+        connection.executemany(
+            "INSERT INTO tournament_participants (tournament_id, player_id, placement, seed) "
+            "VALUES ('wc_07_upset', ?, ?, ?)",
+            [("halo", 1, 2), ("atlas", 2, 1)],
+        )
+        connection.executemany(
+            """
+            INSERT INTO matches (
+                match_id, tournament_id, player_1_id, player_2_id, winner_id,
+                player_1_score, player_2_score, score_known, stage, round_label,
+                suggested_play_order
+            )
+            VALUES (?, 'wc_07_upset', 'atlas', 'halo', ?, ?, ?, 1, ?, ?, ?)
+            """,
+            [
+                (f"wc_07_upset_{index}", "atlas", 2, 0, "group_stage", "1", index)
+                for index in range(6)
+            ]
+            + [("wc_07_upset_final", "halo", 1, 3, "knockout", "GF", 6)],
+        )
 
 
 def _create_group_stage_draft(db_path: Path) -> str:
@@ -94,6 +133,8 @@ class DashboardSmokeTests(unittest.TestCase):
                 data_dir / "model_artifacts" / "combined_v0.2",
             )
         cls.group_draft_id = _create_group_stage_draft(db_path)
+        _add_upset_tournament(db_path)
+        cls.upsets = get_upsets(db_path)
         cls.bracket_draft_id = next(
             str(draft["draft_id"])
             for draft in tournament.list_drafts(db_path)
@@ -148,6 +189,43 @@ class DashboardSmokeTests(unittest.TestCase):
                     PAGE_TITLES[page],
                     [element.value for element in app.title],
                 )
+
+    def test_synthetic_archive_contains_the_halo_upset(self) -> None:
+        self.assertIn(
+            ("halo", "atlas", UPSET_TOURNAMENT_NUMBER),
+            [
+                (upset["winner_id"], upset["loser_id"], upset["tournament_number"])
+                for upset in self.upsets
+            ],
+        )
+
+    def test_upsets_render_on_home_player_and_tournament_pages(self) -> None:
+        home = self.run_app()
+        self.assertIn("⚡ Biggest Upsets", [element.value for element in home.subheader])
+        upset_tables = [
+            element.value
+            for element in home.markdown
+            if 'data-label="Elo Gap"' in element.value.split("</style>")[-1]
+        ]
+        self.assertTrue(upset_tables)
+        self.assertIn("/players?player_id=halo", upset_tables[0])
+        self.assertEqual(len(upset_tables), 1)
+        self.assertEqual(
+            "Show all" in upset_tables[0],
+            len(self.upsets) > 5,
+        )
+        self.assertNotIn("upsets", [element.label for element in home.expander])
+
+        player = self.run_app(page="Players", player_id="halo")
+        self.assertTrue(
+            any("BIGGEST UPSET WIN" in element.value for element in player.markdown)
+        )
+
+        archive = self.run_app(page="Tournaments", tournament=str(UPSET_TOURNAMENT_NUMBER))
+        self.assertIn("⚡ Upsets", [element.value for element in archive.subheader])
+
+        without_upset = self.run_app(page="Tournaments", tournament="1")
+        self.assertNotIn("⚡ Upsets", [element.value for element in without_upset.subheader])
 
     def test_matchup_comparison_renders_for_selected_matrix_cell(self) -> None:
         app = self.run_app(page="Matchups")
