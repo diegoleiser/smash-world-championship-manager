@@ -7,8 +7,8 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-import smash_statistics as stats
 from db.connection import open_sqlite_connection
+from smash_stats.elo_history import get_elo_ranking
 from tournament.group_stage_pairings import generate_round_robin_pairings
 from tournament.group_stage_ranking import build_global_group_ranking
 from tournament.group_stage_standings import (
@@ -1067,7 +1067,7 @@ def get_draft_group_standings(
 ) -> list[dict[str, Any]]:
     """Load each group and calculate its current ordered standings."""
 
-    elo_ranking = stats.get_elo_ranking(
+    elo_ranking = get_elo_ranking(
         db_path,
         active_only=False,
     )
