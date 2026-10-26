@@ -36,6 +36,7 @@ from smash_stats.common import (
     _format_percent,
     _percentage,
 )
+from smash_stats.hall_of_fame import HALL_OF_FAME_GROUPS, get_hall_of_fame
 from smash_stats.rankings import get_ranking, print_ranking
 from smash_stats.records import get_smash_records, print_smash_records
 from smash_stats.upsets import (
