@@ -11,7 +11,6 @@ from text_format import format_ordinal
 from narrative_common import (
     _select_preview_sentences,
     _select_tournament_sentences,
-    _sentence_count,
     _stable_variant,
 )
 

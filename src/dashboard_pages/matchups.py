@@ -15,6 +15,7 @@ from dashboard_pages.navigation_routes import (
     tournament_archive_url,
 )
 from dashboard_pages.ui_components import dashboard_table_html
+from text_format import format_elo
 from tournament.archived_bracket import build_archived_bracket_matches
 
 
@@ -463,7 +464,7 @@ def render_matchups(
         "</div>"
         "<div class='matchup-player-meta'>"
         f"#{left_rank or '–'} · "
-        f"{float(left_profile.get('current_elo') or 1000.0):.1f} Elo<br>"
+        f"{format_elo(left_profile.get('current_elo') or 1000.0)} Elo<br>"
         f"{left_titles} {html.escape(left_title_label)}"
         "</div></div>"
         "<div class='matchup-score'>"
@@ -477,7 +478,7 @@ def render_matchups(
         "</div>"
         "<div class='matchup-player-meta'>"
         f"#{right_rank or '–'} · "
-        f"{float(right_profile.get('current_elo') or 1000.0):.1f} Elo<br>"
+        f"{format_elo(right_profile.get('current_elo') or 1000.0)} Elo<br>"
         f"{right_titles} {html.escape(right_title_label)}"
         "</div></div></div>"
     )
@@ -489,7 +490,7 @@ def render_matchups(
             left_profile.get("peak_elo"),
             right_profile.get("peak_elo"),
             False,
-            lambda value: f"{value:.1f}" if value is not None else "–",
+            lambda value: format_elo(value) if value is not None else "–",
         ),
         (
             "Appearances",

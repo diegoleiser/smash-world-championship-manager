@@ -1082,7 +1082,7 @@ class TournamentPageTests(unittest.TestCase):
             rows,
             [
                 ["Alpha", "1000.0 → 1015.6", "▲ +15.6", "Unranked → #2"],
-                ["Beta", "1042.5 → 1030.0", "▼ -12.5", "#2 → #3"],
+                ["Beta", "1042.5 → 1030.0", "▼ \u221212.5", "#2 → #3"],
                 ["Gamma", "1000.0 → 1000.0", "= 0.0", "Unranked → Unranked"],
             ],
         )

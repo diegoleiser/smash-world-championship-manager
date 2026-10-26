@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import sqlite3
-from pathlib import Path
 
 from challonge_import import DB_PATH, normalize_alias
 

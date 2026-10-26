@@ -22,6 +22,7 @@ from dashboard_pages.upset_format import (
     player_upset_wins,
     upset_elo_before_text,
 )
+from text_format import format_elo, format_elo_change
 
 
 def player_initials(name: str) -> str:
@@ -706,7 +707,7 @@ def render_player_page(
         "CURRENT ELO"
         "</div>"
         "<div class='player-profile-current-value'>"
-        f"{current_elo:.1f}"
+        f"{format_elo(current_elo)}"
         "</div>"
         "</div>"
 
@@ -848,7 +849,7 @@ def render_player_page(
         "PEAK ELO"
         "</div>"
         "<div class='career-overview-value'>"
-        f"{peak_elo:.1f}"
+        f"{format_elo(peak_elo)}"
         "</div>"
         "<div class='career-overview-detail'>"
         "Highest rating after any rated set"
@@ -1361,7 +1362,7 @@ def render_player_page(
             elo_jump_html = _highlight_card_html(
                 "BIGGEST ELO JUMP",
                 f"Recorded at {jump_tournament_html}",
-                f"{change:+.1f}",
+                format_elo_change(change),
             )
 
             st.markdown(
@@ -1392,7 +1393,7 @@ def render_player_page(
                     "BIGGEST UPSET WIN",
                     f"Beat {loser_html} at {upset_tournament_html} · "
                     f"Elo {upset_elo_before_text(biggest_upset)} · {upset_count}",
-                    f"+{float(biggest_upset['elo_gap']):.1f} Elo",
+                    f"{format_elo_change(biggest_upset['elo_gap'])} Elo",
                 ),
                 unsafe_allow_html=True,
             )
@@ -1647,7 +1648,7 @@ def render_player_page(
                                     ),
                                 "label": (
                                     f"Tournament-end peak Elo: "
-                                    f"{float(peak_elo_value):.1f}"
+                                    f"{format_elo(peak_elo_value)}"
                                 ),
                             }
                         ]
@@ -1694,7 +1695,7 @@ def render_player_page(
                 (
                     "TOURNAMENT-END PEAK",
                     "Highest rating at tournament end",
-                    f"{peak_elo_value:.1f}",
+                    format_elo(peak_elo_value),
                 ),
                 (
                     "PEAK REACHED AT",

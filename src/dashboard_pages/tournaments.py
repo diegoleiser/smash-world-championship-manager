@@ -21,6 +21,7 @@ from dashboard_pages.upset_format import (
     tournament_upsets,
     upset_table,
 )
+from text_format import format_elo, format_elo_change
 from tournament.archived_bracket import (
     archived_match_round_label,
     build_archived_bracket_matches,
@@ -427,9 +428,9 @@ def _elo_change_table_rows(
     for change in changes:
         elo_change = float(change["Elo Change"])
         if elo_change > 0:
-            change_text = f"▲ {elo_change:+.1f}"
+            change_text = f"▲ {format_elo_change(elo_change)}"
         elif elo_change < 0:
-            change_text = f"▼ {elo_change:+.1f}"
+            change_text = f"▼ {format_elo_change(elo_change)}"
         else:
             change_text = "= 0.0"
 
@@ -445,8 +446,8 @@ def _elo_change_table_rows(
             [
                 str(change["Players"]),
                 (
-                    f"{float(change['Elo Before']):.1f} → "
-                    f"{float(change['Elo After']):.1f}"
+                    f"{format_elo(change['Elo Before'])} → "
+                    f"{format_elo(change['Elo After'])}"
                 ),
                 change_text,
                 f"{rank_before_text} → {rank_after_text}",
@@ -464,7 +465,7 @@ def _elo_snapshot_table_data(
         [
             f"#{int(row['rank'])}",
             str(row["player"]),
-            f"{float(row['elo']):.1f}",
+            format_elo(row["elo"]),
             "Played" if row["played_in_tournament"] else "Did not play",
         ]
         for row in snapshot
@@ -1107,7 +1108,7 @@ def render_tournaments(
                 f"{html.escape(str(biggest_gain['Players']))}"
                 "</div>"
                 "<div class='archive-elo-summary-change archive-elo-positive'>"
-                f"{float(biggest_gain['Elo Change']):+.1f}"
+                f"{format_elo_change(biggest_gain['Elo Change'])}"
                 "</div></div>"
                 "<div class='archive-elo-summary-item'>"
                 "<div class='archive-elo-summary-label'>Biggest Elo Loss</div>"
@@ -1115,7 +1116,7 @@ def render_tournaments(
                 f"{html.escape(str(biggest_loss['Players']))}"
                 "</div>"
                 "<div class='archive-elo-summary-change archive-elo-negative'>"
-                f"{float(biggest_loss['Elo Change']):+.1f}"
+                f"{format_elo_change(biggest_loss['Elo Change'])}"
                 "</div></div>"
                 "<div class='archive-elo-summary-item'>"
                 "<div class='archive-elo-summary-label'>Elo Changes</div>"

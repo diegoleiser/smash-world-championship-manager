@@ -5,7 +5,7 @@ import unittest
 from bracket_visualization import match_status_label
 from dashboard_pages.player import _summary_pair_html
 from dashboard_pages.ui_components import selector_card_styles, versus_header_html
-from text_format import format_ordinal
+from text_format import format_elo, format_elo_change, format_ordinal
 
 
 class OrdinalTests(unittest.TestCase):
@@ -18,6 +18,25 @@ class OrdinalTests(unittest.TestCase):
         for value, expected in cases.items():
             with self.subTest(value=value):
                 self.assertEqual(format_ordinal(value), expected)
+
+
+class EloFormatTests(unittest.TestCase):
+    def test_elo_values_use_one_decimal(self):
+        for value, expected in ((1128.94, "1128.9"), (1000, "1000.0"), (938.95, "939.0")):
+            with self.subTest(value=value):
+                self.assertEqual(format_elo(value), expected)
+
+    def test_elo_changes_are_signed_with_a_typographic_minus(self):
+        cases = {
+            54.62: "+54.6",
+            -12.5: "\u221212.5",
+            0: "+0.0",
+            -0.04: "+0.0",
+            0.05: "+0.1",
+        }
+        for value, expected in cases.items():
+            with self.subTest(value=value):
+                self.assertEqual(format_elo_change(value), expected)
 
 
 class MatchStatusLabelTests(unittest.TestCase):

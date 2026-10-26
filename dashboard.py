@@ -3,15 +3,12 @@
 
 from __future__ import annotations
 
-import html
 import sys
 from pathlib import Path
 from typing import Any
 
-import altair as alt
 import pandas as pd
 import streamlit as st
-from urllib.parse import quote
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 SRC_DIR = PROJECT_ROOT / "src"
@@ -34,7 +31,6 @@ try:
     )
     from dashboard_pages.theme import dashboard_theme_css
     import milestones
-    import narratives
     from narrative_stories import (
         load_story_archive,
         player_stories,
@@ -43,11 +39,6 @@ try:
     import smash_statistics as stats
     from text_format import format_ordinal
     import tournament_manager as tournament_manager
-    from tournament.archived_bracket import (
-        archived_match_round_label,
-        build_archived_bracket_matches,
-        build_archived_bracket_routes,
-    )
 except ImportError as exc:
     raise ImportError(
         "Required files were not found in src/. "

@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from monte_carlo.config import ModelConfig, load_model_config
+from monte_carlo.config import load_model_config
 from monte_carlo.model import CombinedModel, PlayerParameters
 
 

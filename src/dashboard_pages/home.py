@@ -23,6 +23,7 @@ from dashboard_pages.upset_format import (
     upset_table,
     upsets_with_top_first,
 )
+from text_format import format_elo, format_elo_change
 
 
 def render_home(
@@ -369,7 +370,7 @@ def render_home(
         "margin-top:auto;"
         "padding-top:1rem;"
         "'>"
-        f"#{leader['rank']} · {leader['elo']:.1f} Elo"
+        f"#{leader['rank']} · {format_elo(leader['elo'])} Elo"
         "</div>"
         "</div>"
 
@@ -498,7 +499,7 @@ def render_home(
         )
         favorite_detail = (
             f"#{favorite.get('rank', '–')} · "
-            f"{float(favorite.get('elo') or 1000.0):.1f} Elo"
+            f"{format_elo(favorite.get('elo') or 1000.0)} Elo"
         )
     else:
         favorite_name = "–"
@@ -510,7 +511,7 @@ def render_home(
         )
         challenger_detail = (
             f"#{main_challenger.get('rank', '–')} · "
-            f"{float(main_challenger.get('elo') or 1000.0):.1f} Elo"
+            f"{format_elo(main_challenger.get('elo') or 1000.0)} Elo"
         )
     else:
         challenger_name = "–"
@@ -772,8 +773,8 @@ def render_home(
             [
                 f"{rank_icons.get(rank, '')} #{rank}".strip(),
                 str(entry["player"]),
-                f"{elo:.1f}",
-                "Leader" if rank == 1 else f"−{elo_gap:.1f}",
+                format_elo(elo),
+                "Leader" if rank == 1 else format_elo_change(-elo_gap),
                 str(int(entry["rated_matches"])),
                 "Active" if entry["active"] else "Inactive",
             ]

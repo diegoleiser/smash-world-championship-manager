@@ -11,6 +11,7 @@ from dashboard_pages.navigation_routes import (
 )
 from dashboard_pages.ui_components import internal_dashboard_link
 from smash_stats.upsets import UPSET_MINIMUM_ELO_GAP, UPSET_MINIMUM_PRIOR_SETS
+from text_format import format_elo, format_elo_change
 
 
 UPSET_CAPTION = (
@@ -42,8 +43,8 @@ def upset_elo_before_text(upset: dict[str, Any]) -> str:
     """Return winner and loser Elo before the Set, winner first."""
 
     return (
-        f"{float(upset['winner_elo_before']):.1f} vs "
-        f"{float(upset['loser_elo_before']):.1f}"
+        f"{format_elo(upset['winner_elo_before'])} vs "
+        f"{format_elo(upset['loser_elo_before'])}"
     )
 
 
@@ -107,7 +108,7 @@ def upset_gap_html(upset: dict[str, Any]) -> str:
 
     return (
         "<span>"
-        f"+{float(upset['elo_gap']):.1f}"
+        f"{format_elo_change(upset['elo_gap'])}"
         '<span class="control-table-subline">'
         f"{upset_elo_before_text(upset)}"
         "</span>"
@@ -154,7 +155,7 @@ def upset_table(
             [
                 f"{upset['winner']} vs {upset['loser']}",
                 place_text,
-                f"+{float(upset['elo_gap']):.1f}",
+                format_elo_change(upset["elo_gap"]),
                 upset_score_text(upset),
             ]
         )
