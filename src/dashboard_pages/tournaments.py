@@ -12,7 +12,10 @@ import streamlit as st
 import bracket_visualization
 import narratives
 from dashboard_pages.navigation_routes import player_profile_url
-from dashboard_pages.ui_components import dashboard_table_html
+from dashboard_pages.ui_components import (
+    dashboard_table_html,
+    selector_card_styles,
+)
 from tournament.archived_bracket import (
     archived_match_round_label,
     build_archived_bracket_matches,
@@ -25,60 +28,7 @@ from tournament.group_stage_standings import calculate_group_standings
 def _archived_tournament_selector_styles() -> str:
     """Return page-scoped styles for the archived tournament selector."""
 
-    return """
-    <style>
-    div[class*="st-key-archived_tournament_selector"] {
-        margin-bottom: 0.85rem;
-        padding: 0.55rem 0.85rem 0.75rem;
-        border: 1px solid rgba(128, 128, 128, 0.30);
-        border-radius: 0.8rem;
-        background: var(--swc-surface);
-        transition:
-            border-color 0.15s ease,
-            background-color 0.15s ease,
-            box-shadow 0.15s ease;
-    }
-    div[class*="st-key-archived_tournament_selector"]:hover {
-        border-color: rgba(128, 128, 128, 0.48);
-        background: rgba(128, 128, 128, 0.035);
-    }
-    div[class*="st-key-archived_tournament_selector"]:focus-within {
-        border-color: var(--primary-color, rgb(255, 75, 75));
-        box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.18);
-    }
-    div[class*="st-key-archived_tournament_selector"] label p {
-        color: var(--swc-text-720);
-        font-size: 0.82rem;
-        font-weight: 750;
-    }
-    div[class*="st-key-archived_tournament_selector"]
-    [data-baseweb="select"] > div {
-        min-height: 3.65rem !important;
-        border: none !important;
-        border-radius: 0.55rem !important;
-        background-color: transparent !important;
-        box-shadow: none !important;
-    }
-    div[class*="st-key-archived_tournament_selector"]
-    [role="combobox"],
-    div[class*="st-key-archived_tournament_selector"]
-    [role="combobox"] *,
-    div[class*="st-key-archived_tournament_selector"]
-    [aria-haspopup="listbox"],
-    div[class*="st-key-archived_tournament_selector"]
-    [aria-haspopup="listbox"] *,
-    div[class*="st-key-archived_tournament_selector"]
-    [data-baseweb="select"] * {
-        font-size: 1.75rem !important;
-        font-weight: 800 !important;
-        line-height: 1.2 !important;
-    }
-    div[class*="st-key-archived_tournament_selector"] label p {
-        font-size: 0.82rem !important;
-        font-weight: 750 !important;
-    }
-    </style>
-    """
+    return selector_card_styles("archived_tournament_selector", "1.75rem")
 
 
 def _tournament_recap_html(recap: str) -> str:
