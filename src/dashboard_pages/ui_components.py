@@ -599,11 +599,20 @@ def dashboard_table_styles() -> str:
     """Return the shared style sheet for dashboard_table_html markup.
 
     The dashboard injects it once per page run, so tables do not repeat it.
+    Mobile cards follow the width available to the table (a container
+    query), not the window width, so an open sidebar cannot squeeze the
+    desktop grid; a table that is still too wide scrolls instead of being
+    clipped.
     """
 
     return """
         <style>
+        .control-table-scroll {
+            container-type: inline-size;
+            overflow-x: auto;
+        }
         .control-table {
+            min-width: min-content;
             overflow: hidden;
             border: 1px solid rgba(128, 128, 128, 0.30);
             border-radius: 0.8rem;
@@ -710,15 +719,7 @@ def dashboard_table_styles() -> str:
         .control-table-negative {
             color: var(--swc-negative-soft);
         }
-        @media (max-width: 900px) {
-            .control-table-scroll {
-                overflow-x: auto;
-            }
-            .control-table {
-                min-width: 46rem;
-            }
-        }
-        @media (max-width: 700px) {
+        @container (max-width: 700px) {
             .control-table-mobile-cards {
                 min-width: 0;
                 overflow: visible;
@@ -1510,7 +1511,7 @@ def dashboard_table_styles() -> str:
         .control-table-more[open] .control-table-show-less {
             display: inline;
         }
-        @media (max-width: 700px) {
+        @container (max-width: 700px) {
             .control-table-mobile-cards .control-table-more summary {
                 justify-content: flex-start;
                 padding: 0.9rem 1rem;
@@ -1524,7 +1525,7 @@ def dashboard_table_styles() -> str:
                 margin-top: 0.75rem;
             }
         }
-        @media (max-width: 700px) {
+        @container (max-width: 700px) {
             .control-table-mobile-upsets .control-table-row {
                 grid-template-columns: minmax(0, 1fr) auto;
                 align-items: start;
@@ -1562,7 +1563,7 @@ def dashboard_table_styles() -> str:
                 text-align: right;
             }
         }
-        @media (min-width: 701px) {
+        @container (min-width: 701px) {
             .control-table-mobile-more {
                 display: none;
             }
