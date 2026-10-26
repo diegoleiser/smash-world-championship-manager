@@ -18,6 +18,7 @@ except ImportError:  # pragma: no cover
 ROOT = Path(__file__).resolve().parents[1]
 DB_PATH = ROOT / "data" / "smash_wm.db"
 RAW_DIR = ROOT / "data" / "raw"
+OVERRIDE_DIR = ROOT / "data" / "overrides"
 API_BASE = "https://api.challonge.com/v1"
 
 
@@ -154,6 +155,17 @@ def save_raw(tournament_id: str, participants: Any, matches: Any) -> tuple[Path,
     return participants_path, matches_path
 
 
+def load_overrides(tournament_id: str) -> dict[str, Any]:
+    path = OVERRIDE_DIR / f"{tournament_id}.json"
+    if not path.exists():
+        return {}
+
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"Override file must contain a JSON object: {path}")
+    return payload
+
+
 def stage_and_side(attrs: dict[str, Any]) -> tuple[str, str]:
     if attrs.get("group_id") is not None:
         return "group", "round_robin"
@@ -212,6 +224,31 @@ def import_payloads(
         raise ValueError(f"Unknown internal tournament ID: {tournament_id}")
 
     alias_map = load_alias_map(connection)
+    overrides = load_overrides(tournament_id)
+    placement_overrides = overrides.get("placements", {})
+    match_overrides = overrides.get("matches", {})
+    if not isinstance(placement_overrides, dict):
+        connection.close()
+        raise ValueError("Override field 'placements' must be a JSON object")
+    if not isinstance(match_overrides, dict):
+        connection.close()
+        raise ValueError("Override field 'matches' must be a JSON object")
+
+    placement_overrides_by_player: dict[str, int | None] = {}
+    for name, placement in placement_overrides.items():
+        player_id = alias_map.get(normalize_alias(str(name)))
+        if player_id is None:
+            connection.close()
+            raise ValueError(
+                f"Unknown player in placement override: {name}"
+            )
+        if placement is not None and not isinstance(placement, int):
+            connection.close()
+            raise ValueError(
+                f"Invalid placement for {name}: {placement!r}"
+            )
+        placement_overrides_by_player[player_id] = placement
+
     participant_map: dict[str, str] = {}
     participant_rows: list[tuple[str, str, int | None, int | None]] = []
     unknown_names: list[str] = []
@@ -234,8 +271,12 @@ def import_payloads(
         for group_player_id in attrs.get("group_player_ids") or []:
             participant_map[str(group_player_id)] = player_id
 
+        placement = attrs.get("final_rank")
+        if player_id in placement_overrides_by_player:
+            placement = placement_overrides_by_player[player_id]
+
         participant_rows.append(
-            (tournament_id, player_id, attrs.get("final_rank"), attrs.get("seed"))
+            (tournament_id, player_id, placement, attrs.get("seed"))
         )
 
     if unknown_names:
@@ -250,6 +291,7 @@ def import_payloads(
     skipped: list[str] = []
     validation_issues: list[str] = []
     stages = {"group": 0, "knockout": 0}
+    applied_match_overrides = 0
 
     for item in unwrap_items(matches_payload):
         attrs = attributes(item, "match")
@@ -269,7 +311,36 @@ def import_payloads(
             skipped.append(challonge_match_id)
             continue
 
-        score = parse_score(attrs.get("scores_csv", attrs.get("scores")), winner is not None)
+        identifier = str(attrs.get("identifier", ""))
+        override = match_overrides.get(identifier)
+        if override is None:
+            override = match_overrides.get(challonge_match_id)
+        if override is not None:
+            if not isinstance(override, dict):
+                connection.close()
+                raise ValueError(
+                    f"Match override for {identifier or challonge_match_id} must be a JSON object"
+                )
+            if "winner" in override:
+                winner_name = override["winner"]
+                if winner_name is None:
+                    winner = None
+                else:
+                    winner = alias_map.get(normalize_alias(str(winner_name)))
+                    if winner is None:
+                        connection.close()
+                        raise ValueError(
+                            f"Unknown winner in override for match "
+                            f"{identifier or challonge_match_id}: {winner_name}"
+                        )
+            raw_score = override.get(
+                "score", attrs.get("scores_csv", attrs.get("scores"))
+            )
+            applied_match_overrides += 1
+        else:
+            raw_score = attrs.get("scores_csv", attrs.get("scores"))
+
+        score = parse_score(raw_score, winner is not None)
         stage, bracket_side = stage_and_side(attrs)
         stages[stage] += 1
         issues = validate_match(attrs, p1, p2, winner, score)
@@ -360,6 +431,15 @@ def import_payloads(
         "unknown_aliases": 0,
         "skipped": 0,
         "validation_errors": 0,
+        "match_overrides": applied_match_overrides,
+        "placement_overrides": sum(
+            1
+            for _, player_id, _, _ in participant_rows
+            if player_id in placement_overrides_by_player
+        ),
+        "override_file": str(OVERRIDE_DIR / f"{tournament_id}.json")
+        if overrides
+        else None,
     }
     connection.close()
     return result
@@ -408,6 +488,10 @@ def main() -> None:
     print(f"unknown scores: {result['scores_unknown']}")
     print(f"Unknown aliases:{result['unknown_aliases']:>4}")
     print(f"Errors:           {result['validation_errors']}")
+    if result["override_file"]:
+        print("Overrides applied:")
+        print(f"  Matches:        {result['match_overrides']}")
+        print(f"  Placements:  {result['placement_overrides']}")
 
 
 if __name__ == "__main__":
