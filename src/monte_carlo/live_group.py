@@ -10,7 +10,6 @@ from monte_carlo.group_simulation import SimulationPlayer
 from monte_carlo.model import CombinedModel
 from monte_carlo.scorelines import simulate_scoreline
 from tournament.group_stage_standings import (
-    GROUP_MATCH_CANCELLED,
     GROUP_MATCH_COMPLETED,
     GROUP_MATCH_FORFEIT,
     GROUP_MATCH_PENDING,

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from text_format import format_ordinal
+from text_format import format_elo, format_elo_change, format_ordinal
 
 
 def finalization_standings_table_data(
@@ -43,7 +43,7 @@ def finalization_standings_table_data(
                     else "= Seed"
                 )
             ),
-            f"{elo_after:.1f} ({elo_change:+.1f})",
+            f"{format_elo(elo_after)} ({format_elo_change(elo_change)})",
         ])
 
     return rows, ({0: "winners"} if rows else {})
