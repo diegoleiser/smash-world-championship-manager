@@ -28,6 +28,7 @@ try:
     from dashboard_pages.ui_components import (
         archived_match_result_html,
         compact_score_input_styles,
+        dashboard_table_styles,
         versus_header_html,
     )
     from dashboard_pages.theme import dashboard_theme_css
@@ -61,6 +62,7 @@ st.set_page_config(
 )
 
 st.markdown(dashboard_theme_css(), unsafe_allow_html=True)
+st.markdown(dashboard_table_styles(), unsafe_allow_html=True)
 
 st.markdown(
     """

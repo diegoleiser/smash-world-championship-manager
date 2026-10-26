@@ -49,6 +49,7 @@ from dashboard_pages.ui_components import (  # noqa: E402
     compact_score_input_styles,
     compact_metric_strip_html,
     dashboard_table_html,
+    dashboard_table_styles,
     format_optional_percentage,
     mobile_control_center_card_styles,
     mobile_seeding_styles,
@@ -423,7 +424,7 @@ class TournamentControlCenterTests(unittest.TestCase):
             markup,
         )
         self.assertIn("A &amp; B", markup)
-        self.assertIn("focus-visible", markup)
+        self.assertIn("focus-visible", dashboard_table_styles())
 
         with self.assertRaises(ValueError):
             dashboard_table_html(
@@ -465,8 +466,17 @@ class TournamentControlCenterTests(unittest.TestCase):
         self.assertIn("control-table-mobile-cards control-table-mobile-upsets", markup)
         self.assertIn(
             '.control-table-mobile-upsets\n            .control-table-cell[data-label="Set"]',
-            markup,
+            dashboard_table_styles(),
         )
+
+    def test_dashboard_table_markup_leaves_styles_to_the_page(self) -> None:
+        markup = dashboard_table_html(["Player"], [["Alpha"]], columns="1fr")
+        styles = dashboard_table_styles()
+
+        self.assertNotIn("<style>", markup)
+        self.assertTrue(markup.startswith('<div class="control-table-scroll">'))
+        self.assertTrue(styles.strip().startswith("<style>"))
+        self.assertIn(".control-table-header", styles)
 
     def test_dashboard_table_accepts_ready_cell_markup(self) -> None:
         markup = dashboard_table_html(
@@ -476,7 +486,7 @@ class TournamentControlCenterTests(unittest.TestCase):
             cell_html={(0, 0): "<strong>Alpha</strong> vs Beta"},
         )
 
-        body = markup.split("</style>")[1]
+        body = markup
         self.assertIn('data-label="Set"><strong>Alpha</strong> vs Beta</div>', body)
         self.assertIn('data-label="Score">2–0</div>', body)
 
@@ -491,7 +501,7 @@ class TournamentControlCenterTests(unittest.TestCase):
             more_summary="Show all 4 players",
         )
 
-        body = markup.split("</style>")[1]
+        body = markup
         visible, hidden = body.split('<details class="control-table-more">')
         self.assertIn("Player 1", visible)
         self.assertNotIn("Player 2", visible)
@@ -524,13 +534,13 @@ class TournamentControlCenterTests(unittest.TestCase):
         self.assertIn("control-table-mobile-cards", markup)
         self.assertIn('data-label="Player"', markup)
         self.assertIn('data-label="Elo"', markup)
-        self.assertIn("grid-column: 1 / -1", markup)
+        self.assertIn("grid-column: 1 / -1", dashboard_table_styles())
         self.assertIn("control-table-mobile-collapsed", markup)
         self.assertIn("Show full ranking", markup)
         self.assertIn("Show less", markup)
         self.assertIn("control-table-mobile-more", markup)
         self.assertIn("control-table-mobile-ranking", markup)
-        self.assertIn("order: 2", markup)
+        self.assertIn("order: 2", dashboard_table_styles())
 
         with self.assertRaises(ValueError):
             dashboard_table_html(
