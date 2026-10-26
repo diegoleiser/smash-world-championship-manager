@@ -16,17 +16,22 @@ if str(SRC_DIR) not in sys.path:
 
 # bracket_visualization registers a Streamlit component at import time. These
 # tests exercise only its pure grouping helper, so a minimal component stub
-# keeps the test independent from the optional dashboard dependencies.
-streamlit_module = types.ModuleType("streamlit")
-components_module = types.ModuleType("streamlit.components")
-components_v2_module = types.ModuleType("streamlit.components.v2")
-components_v2_module.component = lambda **_kwargs: lambda **_data: None
-streamlit_module.components = components_module
-components_module.v2 = components_v2_module
+# keeps the test independent from the optional dashboard dependencies. The
+# stub is only installed when Streamlit is missing; otherwise it would replace
+# the real package for every test module loaded afterwards.
+try:
+    import streamlit.components.v2  # noqa: F401
+except ImportError:
+    streamlit_module = types.ModuleType("streamlit")
+    components_module = types.ModuleType("streamlit.components")
+    components_v2_module = types.ModuleType("streamlit.components.v2")
+    components_v2_module.component = lambda **_kwargs: lambda **_data: None
+    streamlit_module.components = components_module
+    components_module.v2 = components_v2_module
 
-sys.modules.setdefault("streamlit", streamlit_module)
-sys.modules.setdefault("streamlit.components", components_module)
-sys.modules.setdefault("streamlit.components.v2", components_v2_module)
+    sys.modules.setdefault("streamlit", streamlit_module)
+    sys.modules.setdefault("streamlit.components", components_module)
+    sys.modules.setdefault("streamlit.components.v2", components_v2_module)
 
 import bracket_visualization as bracket_view  # noqa: E402
 
