@@ -1,0 +1,66 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  private-files:
+    name: Private-file guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reject tracked private data
+        # Mirrors the "Private und lokale Dateien" rules: databases, seeds,
+        # Challonge raw data, overrides, model artifacts, credentials and
+        # session notes stay local. Public examples belong in examples/.
+        run: |
+          forbidden='^(\.env$|\.env\..+|data/.+\.db$|data/private_seed\.json$|data/tournament_registry\.csv$|data/(raw|overrides|model_artifacts)/|private-session-docs/|AGENTS\.md$|.*\.(db|sqlite3?)(-journal|-wal|-shm)?$)'
+          matches="$(git ls-files | grep -E "$forbidden" | grep -vxF '.env.example' || true)"
+          if [ -n "$matches" ]; then
+            echo "::error::Private or local-only files are tracked:"
+            echo "$matches"
+            exit 1
+          fi
+          echo "No private files tracked."
+
+  tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dashboard.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt -r requirements-dashboard.txt
+
+      - name: Check whitespace in the pull request diff
+        if: github.event_name == 'pull_request'
+        run: git diff --check "${{ github.event.pull_request.base.sha }}" HEAD
+
+      - name: Run test suite
+        # Tests use temporary databases and the synthetic demo generator only.
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -v
