@@ -883,15 +883,6 @@ def load_tournament_story_context(
     }
 
 
-def format_percent(value: float | None) -> str:
-    return "–" if value is None else f"{value:.1f} %"
-
-
-def format_placement(value: int | None) -> str:
-    return "–" if value is None else f"{value}."
-
-
-
 @st.cache_data
 def load_database_quality() -> dict[str, Any]:
     """Loads archive completeness metrics."""
