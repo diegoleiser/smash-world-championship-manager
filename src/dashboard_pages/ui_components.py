@@ -656,6 +656,22 @@ def dashboard_table_styles() -> str:
             background: rgba(59, 130, 246, 0.055);
             box-shadow: inset 3px 0 rgba(96, 165, 250, 0.48);
         }
+        .control-table-row-champion {
+            background: rgba(234, 179, 8, 0.065);
+            box-shadow: inset 3px 0 rgba(250, 204, 21, 0.48);
+        }
+        .control-table-bar {
+            display: block;
+            height: 0.32rem;
+            margin-top: 0.35rem;
+            overflow: hidden;
+            border-radius: 999px;
+            background: rgba(128, 128, 128, 0.22);
+        }
+        .control-table-bar-fill {
+            height: 100%;
+            border-radius: 999px;
+        }
         .control-table-cell {
             min-width: 0;
             overflow: hidden;
@@ -742,6 +758,10 @@ def dashboard_table_styles() -> str:
             .control-table-mobile-cards .control-table-row-winners {
                 background: rgba(34, 197, 94, 0.07);
                 box-shadow: inset 3px 0 rgba(74, 222, 128, 0.42);
+            }
+            .control-table-mobile-cards .control-table-row-champion {
+                background: rgba(234, 179, 8, 0.065);
+                box-shadow: inset 3px 0 rgba(250, 204, 21, 0.48);
             }
             .control-table-mobile-cards .control-table-row:last-child {
                 margin-bottom: 0;
