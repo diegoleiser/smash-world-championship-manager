@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date, datetime
+
 
 def format_ordinal(value: int) -> str:
     """Format an integer as an English ordinal (1st, 2nd, 11th, 23rd)."""
@@ -31,3 +33,18 @@ def format_elo_change(value: float) -> str:
     rounded = round(float(value), 1)
     sign = ELO_MINUS if rounded < 0 else "+"
     return f"{sign}{abs(rounded):.1f}"
+
+
+def format_date(value: str | date | datetime | None) -> str:
+    """Format a date as "24 Oct 2026"; missing or invalid values become "–"."""
+
+    if isinstance(value, datetime):
+        value = value.date()
+    if isinstance(value, date):
+        return value.strftime("%d %b %Y")
+    if not value:
+        return "–"
+    try:
+        return date.fromisoformat(str(value)[:10]).strftime("%d %b %Y")
+    except ValueError:
+        return "–"

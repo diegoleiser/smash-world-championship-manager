@@ -16,7 +16,7 @@ from dashboard_pages.ui_components import (
     internal_dashboard_link,
 )
 from smash_stats.hall_of_fame import HALL_OF_FAME_GROUPS
-from text_format import format_elo
+from text_format import format_date, format_elo
 
 
 RECENT_MILESTONE_TOURNAMENTS = 3
@@ -213,7 +213,7 @@ def recent_milestone_table(
                 "<span>"
                 + internal_dashboard_link(label, tournament_archive_url(number))
                 + f'<span class="control-table-subline">'
-                f"{html.escape(date)}</span>"
+                f"{html.escape(format_date(date))}</span>"
                 "</span>"
             )
 

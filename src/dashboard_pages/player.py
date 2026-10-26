@@ -22,7 +22,7 @@ from dashboard_pages.upset_format import (
     player_upset_wins,
     upset_elo_before_text,
 )
-from text_format import format_elo, format_elo_change
+from text_format import format_date, format_elo, format_elo_change
 
 
 def player_initials(name: str) -> str:
@@ -2108,12 +2108,7 @@ def render_player_page(
                     entry["tournament"]
                 )
 
-                if entry.get("date"):
-                    formatted_date = pd.to_datetime(
-                        entry["date"]
-                    ).strftime("%d %b %Y")
-                else:
-                    formatted_date = "–"
+                formatted_date = format_date(entry.get("date"))
 
                 placement = entry.get(
                     "placement"

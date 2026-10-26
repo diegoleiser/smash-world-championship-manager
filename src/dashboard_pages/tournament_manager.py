@@ -33,6 +33,7 @@ from monte_carlo.live_service import (
     forecast_live_draft_bracket,
     forecast_live_draft_group,
 )
+from text_format import format_date
 
 
 @st.cache_resource
@@ -1237,7 +1238,9 @@ def render_tournament_manager(
     )
     detail_cols[1].metric(
         "Date",
-        draft["tournament_date"] or "Not set",
+        format_date(draft["tournament_date"])
+        if draft["tournament_date"]
+        else "Not set",
     )
     detail_cols[2].metric(
         "Format",

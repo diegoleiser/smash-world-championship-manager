@@ -21,7 +21,7 @@ from dashboard_pages.upset_format import (
     tournament_upsets,
     upset_table,
 )
-from text_format import format_elo, format_elo_change
+from text_format import format_date, format_elo, format_elo_change
 from tournament.archived_bracket import (
     archived_match_round_label,
     build_archived_bracket_matches,
@@ -147,7 +147,7 @@ def _archived_tournament_header_html(
         )
 
     tournament_number = int(tournament["tournament_number"])
-    tournament_date = html.escape(str(tournament.get("tournament_date") or "–"))
+    tournament_date = html.escape(format_date(tournament.get("tournament_date")))
     participant_label = (
         f"{len(participants)} Participants"
         if participants
@@ -793,7 +793,7 @@ def render_tournaments(
     )
 
     if upsets:
-        st.subheader("⚡ Upsets")
+        st.subheader("Upsets")
         st.caption(UPSET_CAPTION)
         table = upset_table(upsets, include_tournament=False)
         st.markdown(

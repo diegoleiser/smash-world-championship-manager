@@ -844,7 +844,7 @@ class TournamentPageTests(unittest.TestCase):
         )
 
         self.assertIn("WC 08", markup)
-        self.assertIn("2026-07-31", markup)
+        self.assertIn("31 Jul 2026", markup)
         self.assertIn("4 Participants", markup)
         self.assertIn("14 Sets", markup)
         self.assertIn("Champion", markup)
