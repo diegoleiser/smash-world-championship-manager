@@ -269,6 +269,24 @@ class DashboardSmokeTests(unittest.TestCase):
             1,
         )
 
+    def test_finalized_draft_shows_one_archive_message_with_link(self) -> None:
+        app = self.run_app(page="Tournament Manager")
+        self.select_draft(app, 4)
+
+        self.assertEqual(len(app.metric), 0)
+        self.assertEqual(len(app.info), 0)
+        self.assertEqual(len(app.success), 0)
+        notes = [
+            element.value
+            for element in app.markdown
+            if 'class="archived-draft-note"' in element.value
+        ]
+        self.assertEqual(len(notes), 1)
+        self.assertIn('href="/tournaments?tournament=4" target="_self"', notes[0])
+        self.assertTrue(
+            any("compact-metric-strip" in element.value for element in app.markdown)
+        )
+
     def test_matchup_comparison_renders_for_selected_matrix_cell(self) -> None:
         app = self.run_app(page="Matchups")
         app.session_state["matchups_matrix_selection"] = {

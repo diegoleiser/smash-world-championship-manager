@@ -13,6 +13,7 @@ import streamlit as st
 import bracket_visualization
 import tournament_manager
 from dashboard_pages.forecast_format import format_winners_probability
+from dashboard_pages.navigation_routes import tournament_archive_url
 from dashboard_pages.tournament_control_center import (
     finalization_standings_table_data,
     group_ready_matches,
@@ -23,6 +24,7 @@ from dashboard_pages.ui_components import (
     compact_score_input_styles,
     dashboard_table_html,
     format_optional_percentage,
+    internal_dashboard_link,
     mobile_control_center_card_styles,
     mobile_seeding_styles,
     up_next_matchup_html,
@@ -268,6 +270,56 @@ def _render_live_bracket_forecast(
         "10'000 simulations · completed Bracket Sets fixed · Day values "
         "fixed at Bracket start (neutral without a Group Stage) · "
         "provisional UI"
+    )
+
+
+DRAFT_FORMAT_LABELS = {
+    tournament_manager.FORMAT_GROUP_STAGE: "Groups → DE",
+    tournament_manager.FORMAT_DOUBLE_ELIMINATION: "DE Only",
+}
+DRAFT_ENTRY_NOTES = {
+    tournament_manager.ENTRY_ALL_WINNERS: "All start in Winners",
+    tournament_manager.ENTRY_SPLIT_BY_GROUP_SEED: "Lower seeds may start in Losers",
+}
+
+
+def draft_header_metrics(draft: dict[str, Any]) -> list[tuple[str, str | int, str]]:
+    """Return the compact metric strip items describing a draft."""
+
+    return [
+        ("Tournament", f"WC {int(draft['tournament_number']):02d}", ""),
+        (
+            "Date",
+            format_date(draft["tournament_date"]) if draft["tournament_date"] else "Not set",
+            "",
+        ),
+        (
+            "Format",
+            DRAFT_FORMAT_LABELS[draft["format_type"]],
+            DRAFT_ENTRY_NOTES[draft["bracket_entry_mode"]],
+        ),
+        ("Participants", len(draft["participants"]), ""),
+    ]
+
+
+def archived_draft_note_html(tournament_number: int) -> str:
+    """Return the single note for a finalized draft, linking to its archive page."""
+
+    link = internal_dashboard_link(
+        f"View WC {tournament_number:02d} in Tournaments",
+        tournament_archive_url(tournament_number),
+        class_name="archived-draft-link",
+    )
+    return (
+        "<style>.archived-draft-link,.archived-draft-link:visited"
+        "{color:inherit !important;text-decoration:underline !important;"
+        "text-underline-offset:0.18em;}</style>"
+        '<div class="archived-draft-note" style="margin:0.35rem 0 1rem;'
+        "padding:0.85rem 1rem;border:1px solid rgba(63,185,80,0.28);"
+        'border-radius:0.6rem;background:rgba(63,185,80,0.10);'
+        'color:var(--swc-positive);font-weight:600;">'
+        f"Finalized and added to the permanent archive. {link}"
+        "</div>"
     )
 
 
@@ -1217,44 +1269,17 @@ def render_tournament_manager(
         bracket_state=draft_bracket_state,
     )
 
-    format_display = {
-        tournament_manager.FORMAT_GROUP_STAGE:
-            "Group Stage → Double Elimination",
-        tournament_manager.FORMAT_DOUBLE_ELIMINATION:
-            "Double Elimination Only",
-    }
-
-    entry_display = {
-        tournament_manager.ENTRY_ALL_WINNERS:
-            "All players start in Winners Bracket",
-        tournament_manager.ENTRY_SPLIT_BY_GROUP_SEED:
-            "Lower seeds may start in Losers Bracket",
-    }
-
-    detail_cols = st.columns(4)
-    detail_cols[0].metric(
-        "Tournament",
-        f"WC {int(draft['tournament_number']):02d}",
-    )
-    detail_cols[1].metric(
-        "Date",
-        format_date(draft["tournament_date"])
-        if draft["tournament_date"]
-        else "Not set",
-    )
-    detail_cols[2].metric(
-        "Format",
-        format_display[draft["format_type"]],
-    )
-    detail_cols[3].metric(
-        "Participants",
-        len(draft["participants"]),
+    st.markdown(
+        compact_metric_strip_html(draft_header_metrics(draft), mobile_columns=2),
+        unsafe_allow_html=True,
     )
 
-    st.caption(
-        f"Bracket entry: "
-        f"{entry_display[draft['bracket_entry_mode']]}"
-    )
+    if draft["status"] == "completed":
+        st.markdown(
+            archived_draft_note_html(int(draft["tournament_number"])),
+            unsafe_allow_html=True,
+        )
+        return
 
     st.markdown(
         (
@@ -1269,17 +1294,6 @@ def render_tournament_manager(
         ),
         unsafe_allow_html=True,
     )
-
-    if draft["status"] == "completed":
-        st.success(
-            "This tournament has been finalized and added "
-            "to the permanent archive."
-        )
-        st.info(
-            "Open the Tournaments page to view the archived "
-            "results and statistics."
-        )
-        return
 
     control_center_active = bool(
         draft_group_matches or bracket_generated

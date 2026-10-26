@@ -29,6 +29,7 @@ from dashboard_pages.player import (  # noqa: E402
     _player_selector_styles,
 )
 from text_format import format_ordinal  # noqa: E402
+from dashboard_pages.tournament_manager import draft_header_metrics  # noqa: E402
 from dashboard_pages.tournament_control_center import (  # noqa: E402
     finalization_standings_table_data,
     group_ready_matches,
@@ -740,6 +741,25 @@ class TournamentControlCenterTests(unittest.TestCase):
 
 
 class TournamentManagerPageTests(unittest.TestCase):
+    def test_draft_header_uses_short_format_with_entry_note(self) -> None:
+        metrics = draft_header_metrics({
+            "tournament_number": 7,
+            "tournament_date": "2026-11-14",
+            "format_type": "group_stage_double_elimination",
+            "bracket_entry_mode": "split_by_group_seed",
+            "participants": [{}, {}, {}],
+        })
+
+        self.assertEqual(
+            metrics,
+            [
+                ("Tournament", "WC 07", ""),
+                ("Date", "14 Nov 2026", ""),
+                ("Format", "Groups → DE", "Lower seeds may start in Losers"),
+                ("Participants", 3, ""),
+            ],
+        )
+
     def test_final_standings_data_is_shared_between_manager_views(self) -> None:
         rows, highlights = finalization_standings_table_data([
             {
