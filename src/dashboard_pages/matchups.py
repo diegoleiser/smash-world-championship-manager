@@ -15,7 +15,7 @@ from dashboard_pages.navigation_routes import (
     tournament_archive_url,
 )
 from dashboard_pages.ui_components import dashboard_table_html
-from text_format import format_elo
+from text_format import format_date, format_elo, format_ordinal
 from tournament.archived_bracket import build_archived_bracket_matches
 
 
@@ -379,10 +379,10 @@ def render_matchups(
     right_timeline = load_player_timeline(right_id)
     h2h = load_head_to_head(left_id, right_id)
 
-    full_ranking = load_elo_ranking(True)
+    ranking = load_elo_ranking(include_inactive)
     ranks = {
         str(entry["player_id"]): entry["rank"]
-        for entry in full_ranking
+        for entry in ranking
     }
 
     left_rank = ranks.get(left_id)
@@ -511,21 +511,21 @@ def render_matchups(
             left_profile.get("winrate"),
             right_profile.get("winrate"),
             False,
-            lambda value: f"{value:.1f} %" if value is not None else "–",
+            lambda value: f"{value:.1f}%" if value is not None else "–",
         ),
         (
             "Best Placement",
             left_profile.get("best_result"),
             right_profile.get("best_result"),
             True,
-            lambda value: f"{value}." if value is not None else "–",
+            lambda value: format_ordinal(int(value)) if value is not None else "–",
         ),
         (
             "Average Placement",
             left_profile.get("average_result"),
             right_profile.get("average_result"),
             True,
-            lambda value: f"{value:.2f}" if value is not None else "–",
+            lambda value: f"{value:.1f}" if value is not None else "–",
         ),
     ]
 
@@ -1025,13 +1025,7 @@ def render_matchups(
                 match_rows.append(
                     [
                         match["tournament"],
-                        (
-                            pd.to_datetime(
-                                match["date"]
-                            ).strftime("%d %b %Y")
-                            if match["date"]
-                            else "–"
-                        ),
+                        format_date(match["date"]),
                         round_text,
                         (
                             match["winner"]

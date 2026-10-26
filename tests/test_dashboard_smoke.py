@@ -202,7 +202,7 @@ class DashboardSmokeTests(unittest.TestCase):
 
     def test_upsets_render_on_home_player_and_tournament_pages(self) -> None:
         home = self.run_app()
-        self.assertIn("⚡ Biggest Upsets", [element.value for element in home.subheader])
+        self.assertIn("Biggest Upsets", [element.value for element in home.subheader])
         upset_tables = [
             element.value
             for element in home.markdown
@@ -223,10 +223,10 @@ class DashboardSmokeTests(unittest.TestCase):
         )
 
         archive = self.run_app(page="Tournaments", tournament=str(UPSET_TOURNAMENT_NUMBER))
-        self.assertIn("⚡ Upsets", [element.value for element in archive.subheader])
+        self.assertIn("Upsets", [element.value for element in archive.subheader])
 
         without_upset = self.run_app(page="Tournaments", tournament="1")
-        self.assertNotIn("⚡ Upsets", [element.value for element in without_upset.subheader])
+        self.assertNotIn("Upsets", [element.value for element in without_upset.subheader])
 
     def test_hall_of_fame_shows_record_groups_and_recent_milestones(self) -> None:
         app = self.run_app(page="Hall of Fame")

@@ -5,7 +5,9 @@ import unittest
 from bracket_visualization import match_status_label
 from dashboard_pages.player import _summary_pair_html
 from dashboard_pages.ui_components import selector_card_styles, versus_header_html
-from text_format import format_elo, format_elo_change, format_ordinal
+from datetime import date, datetime
+
+from text_format import format_date, format_elo, format_elo_change, format_ordinal
 
 
 class OrdinalTests(unittest.TestCase):
@@ -18,6 +20,24 @@ class OrdinalTests(unittest.TestCase):
         for value, expected in cases.items():
             with self.subTest(value=value):
                 self.assertEqual(format_ordinal(value), expected)
+
+
+class DateFormatTests(unittest.TestCase):
+    def test_dates_use_day_month_name_year(self):
+        cases = {
+            "2026-10-24": "24 Oct 2026",
+            "2022-01-03 18:30:00": "03 Jan 2022",
+            date(2025, 6, 15): "15 Jun 2025",
+            datetime(2024, 3, 31, 12, 0): "31 Mar 2024",
+        }
+        for value, expected in cases.items():
+            with self.subTest(value=value):
+                self.assertEqual(format_date(value), expected)
+
+    def test_missing_or_invalid_dates_show_a_dash(self):
+        for value in (None, "", "unknown"):
+            with self.subTest(value=value):
+                self.assertEqual(format_date(value), "–")
 
 
 class EloFormatTests(unittest.TestCase):

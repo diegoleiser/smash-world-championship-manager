@@ -23,7 +23,7 @@ from dashboard_pages.upset_format import (
     upset_table,
     upsets_with_top_first,
 )
-from text_format import format_elo, format_elo_change
+from text_format import format_date, format_elo, format_elo_change
 
 
 def render_home(
@@ -44,7 +44,7 @@ def render_home(
 
     quality = load_database_quality()
 
-    st.subheader("📊 Archive Summary")
+    st.subheader("Archive Summary")
 
     archive_summary_html = (
         "<div class='archive-summary-grid' style='"
@@ -532,7 +532,7 @@ def render_home(
         rivalry_detail = "No featured rivalry"
 
     st.divider()
-    st.subheader("🔮 Next Tournament Preview")
+    st.subheader("Next Tournament Preview")
 
     preview_cards_html = (
         "<style>"
@@ -737,19 +737,7 @@ def render_home(
         unsafe_allow_html=True,
     )
 
-    st.markdown(
-        (
-            "<div style='"
-            "margin-top:1.6rem;"
-            "margin-bottom:0.75rem;"
-            "font-size:1.35rem;"
-            "font-weight:800;"
-            "'>"
-            "Preview Highlights"
-            "</div>"
-        ),
-        unsafe_allow_html=True,
-    )
+    st.markdown("#### Preview Highlights")
 
     st.markdown(
         preview_cards_html,
@@ -804,19 +792,7 @@ def render_home(
         ),
         unsafe_allow_html=True,
     )
-    st.markdown(
-        (
-            "<div style='"
-            "margin-top:2rem;"
-            "margin-bottom:0.75rem;"
-            "font-size:1.5rem;"
-            "font-weight:800;"
-            "'>"
-            "Elo History"
-            "</div>"
-        ),
-        unsafe_allow_html=True,
-    )
+    st.subheader("Elo History")
 
     elo_history_rows: list[dict[str, Any]] = []
 
@@ -1273,9 +1249,7 @@ def render_home(
     _render_biggest_upsets(load_upsets())
 
     st.divider()
-    st.subheader(
-        "🏆 Tournament Overview"
-    )
+    st.subheader("Tournament Overview")
 
     if tournaments:
         tournament_df = pd.DataFrame(
@@ -1304,9 +1278,7 @@ def render_home(
         for row_index, row in tournament_df.iterrows():
             raw_date = row["Date"]
             formatted_date = (
-                pd.to_datetime(raw_date).strftime("%d %b %Y")
-                if pd.notna(raw_date)
-                else "–"
+                format_date(raw_date) if pd.notna(raw_date) else "–"
             )
             players_value = row["Players"]
             players_text = (
@@ -1347,19 +1319,7 @@ def render_home(
             ),
             unsafe_allow_html=True,
         )
-        st.markdown(
-            (
-                "<div style='"
-                "margin-top:2rem;"
-                "margin-bottom:0.75rem;"
-                "font-size:1.5rem;"
-                "font-weight:800;"
-                "'>"
-                "Title Leaders"
-                "</div>"
-            ),
-            unsafe_allow_html=True,
-        )
+        st.subheader("Title Leaders")
 
         title_counts = (
             tournament_df["Champion"]
@@ -1429,7 +1389,7 @@ def render_home(
 def _render_biggest_upsets(upsets: list[dict[str, Any]]) -> None:
     """Show the top upsets (one per pairing); the rest open below them."""
 
-    st.subheader("⚡ Biggest Upsets")
+    st.subheader("Biggest Upsets")
     st.caption(UPSET_CAPTION)
 
     if not upsets:
