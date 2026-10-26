@@ -184,8 +184,8 @@ class DashboardNarrativeConsistencyTests(unittest.TestCase):
             ("Alpha", "Beta"),
             ("Gamma", "Delta"),
             ("Echo", "Foxtrot"),
-            ("Giona", "Tamira"),
-            ("Diego", "Gianni"),
+            ("Gray", "Harper"),
+            ("Drew", "Finley"),
         ]
         summaries = {
             narratives._overall_summary(left, right, 6, 4)
@@ -334,14 +334,14 @@ class DashboardNarrativeConsistencyTests(unittest.TestCase):
 
     def test_tournament_recap_explains_missing_archive_details(self) -> None:
         summary = narratives.generate_tournament_summary(
-            {"tournament_number": 3, "winner": "Diego"},
+            {"tournament_number": 3, "winner": "Drew"},
             [],
             [],
             [],
             winner_title_number=1,
         )
 
-        self.assertIn("Diego won WC 03", summary)
+        self.assertIn("Drew won WC 03", summary)
         self.assertIn(
             "Detailed participant and set records are not available",
             summary,
