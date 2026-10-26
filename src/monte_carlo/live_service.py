@@ -170,18 +170,6 @@ def load_live_draft_group_states(
     return tuple(states)
 
 
-def load_live_draft_group_state(
-    db_path: str | Path,
-    draft_id: str,
-) -> LiveDraftGroupState:
-    """Load one group for callers that explicitly require a single group."""
-
-    states = load_live_draft_group_states(db_path, draft_id)
-    if len(states) != 1:
-        raise ValueError("This operation requires exactly one group.")
-    return states[0]
-
-
 def forecast_live_draft_group(
     db_path: str | Path,
     draft_id: str,
