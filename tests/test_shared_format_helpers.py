@@ -3,7 +3,7 @@
 import unittest
 
 from bracket_visualization import match_status_label
-from dashboard_pages.ui_components import versus_header_html
+from dashboard_pages.ui_components import selector_card_styles, versus_header_html
 from text_format import format_ordinal
 
 
@@ -54,6 +54,21 @@ class VersusHeaderTests(unittest.TestCase):
             '&lt;Beta&gt;</div>'
             '</div>',
         )
+
+
+class SelectorCardStylesTests(unittest.TestCase):
+    def test_pages_share_one_card_language(self):
+        player = selector_card_styles("player_profile_selector", "1.4rem")
+        tournament = selector_card_styles("archived_tournament_selector", "1.75rem")
+
+        self.assertEqual(
+            player.replace("player_profile_selector", "KEY").replace("1.4rem", "SIZE"),
+            tournament.replace("archived_tournament_selector", "KEY").replace("1.75rem", "SIZE"),
+        )
+        self.assertEqual(player.count('div[class*="st-key-player_profile_selector"]'), 10)
+        self.assertIn("font-size: 1.4rem !important;", player)
+        for leftover in ("{{", "}}", "{container_key}", "{value_font_size}"):
+            self.assertNotIn(leftover, player)
 
 
 if __name__ == "__main__":

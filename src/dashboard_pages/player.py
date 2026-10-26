@@ -14,7 +14,10 @@ from dashboard_pages.navigation_routes import (
     player_profile_url,
     tournament_archive_url,
 )
-from dashboard_pages.ui_components import internal_dashboard_link
+from dashboard_pages.ui_components import (
+    internal_dashboard_link,
+    selector_card_styles,
+)
 
 
 def player_initials(name: str) -> str:
@@ -31,56 +34,7 @@ def player_initials(name: str) -> str:
 def _player_selector_styles() -> str:
     """Return the shared card language for the player selector."""
 
-    return """
-    <style>
-    div[class*="st-key-player_profile_selector"] {
-        margin-bottom: 0.85rem;
-        padding: 0.55rem 0.85rem 0.75rem;
-        border: 1px solid rgba(128, 128, 128, 0.30);
-        border-radius: 0.8rem;
-        background: var(--swc-surface);
-        transition:
-            border-color 0.15s ease,
-            background-color 0.15s ease,
-            box-shadow 0.15s ease;
-    }
-    div[class*="st-key-player_profile_selector"]:hover {
-        border-color: rgba(128, 128, 128, 0.48);
-        background: rgba(128, 128, 128, 0.035);
-    }
-    div[class*="st-key-player_profile_selector"]:focus-within {
-        border-color: var(--primary-color, rgb(255, 75, 75));
-        box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.18);
-    }
-    div[class*="st-key-player_profile_selector"] label p {
-        color: var(--swc-text-720);
-        font-size: 0.82rem !important;
-        font-weight: 750 !important;
-    }
-    div[class*="st-key-player_profile_selector"]
-    [data-baseweb="select"] > div {
-        min-height: 3.65rem !important;
-        border: none !important;
-        border-radius: 0.55rem !important;
-        background-color: transparent !important;
-        box-shadow: none !important;
-    }
-    div[class*="st-key-player_profile_selector"]
-    [role="combobox"],
-    div[class*="st-key-player_profile_selector"]
-    [role="combobox"] *,
-    div[class*="st-key-player_profile_selector"]
-    [aria-haspopup="listbox"],
-    div[class*="st-key-player_profile_selector"]
-    [aria-haspopup="listbox"] *,
-    div[class*="st-key-player_profile_selector"]
-    [data-baseweb="select"] * {
-        font-size: 1.4rem !important;
-        font-weight: 800 !important;
-        line-height: 1.2 !important;
-    }
-    </style>
-    """
+    return selector_card_styles("player_profile_selector", "1.4rem")
 
 
 def _placement_distribution_data(
