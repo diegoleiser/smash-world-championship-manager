@@ -1742,56 +1742,42 @@ def clickable_card_button_styles(
 
 
 def selector_card_styles(container_key: str, value_font_size: str) -> str:
-    """Return the card styles for a page-level selectbox container.
+    """Return the styles for a prominent page-level selectbox.
 
-    The container is created with ``st.container(key=container_key)``;
-    ``value_font_size`` sets the size of the selected value.
+    The selectbox sits in ``st.container(key=container_key)``;
+    ``value_font_size`` sets the size of the selected value. The field keeps
+    Streamlit's own background so it reads as a dropdown, and gains a taller
+    outlined shape with hover and focus states. It is reached through its
+    ARIA roles (``group`` field, ``combobox`` input) rather than generated
+    classes; if a Streamlit update changes them, the default selectbox
+    remains.
     """
 
     return f"""
     <style>
     div[class*="st-key-{container_key}"] {{
         margin-bottom: 0.85rem;
-        padding: 0.55rem 0.85rem 0.75rem;
-        border: 1px solid rgba(128, 128, 128, 0.30);
-        border-radius: 0.8rem;
-        background: var(--swc-surface);
-        transition:
-            border-color 0.15s ease,
-            background-color 0.15s ease,
-            box-shadow 0.15s ease;
-    }}
-    div[class*="st-key-{container_key}"]:hover {{
-        border-color: rgba(128, 128, 128, 0.48);
-        background: rgba(128, 128, 128, 0.035);
-    }}
-    div[class*="st-key-{container_key}"]:focus-within {{
-        border-color: var(--primary-color, rgb(255, 75, 75));
-        box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.18);
     }}
     div[class*="st-key-{container_key}"] label p {{
         color: var(--swc-text-720);
         font-size: 0.82rem !important;
         font-weight: 750 !important;
     }}
-    div[class*="st-key-{container_key}"]
-    [data-baseweb="select"] > div {{
-        min-height: 3.65rem !important;
-        border: none !important;
-        border-radius: 0.55rem !important;
-        background-color: transparent !important;
-        box-shadow: none !important;
+    div[class*="st-key-{container_key}"] [role="group"] {{
+        min-height: 3.4rem;
+        border: 1px solid rgba(128, 128, 128, 0.30) !important;
+        border-radius: 0.7rem !important;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }}
-    div[class*="st-key-{container_key}"]
-    [role="combobox"],
-    div[class*="st-key-{container_key}"]
-    [role="combobox"] *,
-    div[class*="st-key-{container_key}"]
-    [aria-haspopup="listbox"],
-    div[class*="st-key-{container_key}"]
-    [aria-haspopup="listbox"] *,
-    div[class*="st-key-{container_key}"]
-    [data-baseweb="select"] * {{
+    div[class*="st-key-{container_key}"] [role="group"]:hover {{
+        border-color: rgba(128, 128, 128, 0.55) !important;
+    }}
+    div[class*="st-key-{container_key}"] [role="group"]:focus-within {{
+        border-color: var(--primary-color, rgb(255, 75, 75)) !important;
+        box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.18) !important;
+    }}
+    div[class*="st-key-{container_key}"] [role="combobox"] {{
+        padding-left: 0.9rem !important;
         font-size: {value_font_size} !important;
         font-weight: 800 !important;
         line-height: 1.2 !important;

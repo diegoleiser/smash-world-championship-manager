@@ -142,9 +142,9 @@ class MatchupsPageBoundaryTests(unittest.TestCase):
         styles = _player_selector_styles()
 
         self.assertIn("st-key-player_profile_selector", styles)
-        self.assertIn("border-radius: 0.8rem", styles)
+        self.assertIn("border-radius: 0.7rem", styles)
         self.assertIn(":focus-within", styles)
-        self.assertIn("background-color: transparent", styles)
+        self.assertNotIn("background-color: transparent", styles)
 
     def test_player_placement_distribution_counts_and_sorts_finishes(
         self,
@@ -896,14 +896,14 @@ class TournamentPageTests(unittest.TestCase):
         styles = _archived_tournament_selector_styles()
 
         self.assertIn("st-key-archived_tournament_selector", styles)
-        self.assertIn("padding: 0.55rem 0.85rem 0.75rem", styles)
-        self.assertIn("border-radius: 0.8rem", styles)
-        self.assertIn("[data-baseweb=\"select\"]", styles)
-        self.assertIn("background-color: transparent", styles)
+        self.assertIn("min-height: 3.4rem", styles)
+        self.assertIn("border-radius: 0.7rem", styles)
+        self.assertIn('[role="group"]', styles)
+        self.assertNotIn("background-color: transparent", styles)
         self.assertIn("font-size: 1.75rem", styles)
         self.assertIn("font-weight: 800", styles)
-        self.assertIn("[role=\"combobox\"]", styles)
-        self.assertIn("[aria-haspopup=\"listbox\"]", styles)
+        self.assertIn('[role="combobox"]', styles)
+        self.assertNotIn("data-baseweb", styles)
         self.assertIn(":hover", styles)
         self.assertIn("!important", styles)
         self.assertIn(":focus-within", styles)
