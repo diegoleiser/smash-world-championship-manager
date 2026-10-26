@@ -17,7 +17,9 @@ from dashboard_pages.navigation_routes import (
 from dashboard_pages.ui_components import (
     dashboard_table_html,
     internal_dashboard_link,
+    narrative_paragraphs_html,
     selector_card_styles,
+    summary_box_html,
 )
 from dashboard_pages.upset_format import (
     player_upset_wins,
@@ -1016,101 +1018,11 @@ def render_player_page(
         current_rank,
     )
 
-    summary_sentences = [
-        sentence.strip()
-        for sentence in career_summary.split(". ")
-        if sentence.strip()
-    ]
-
-    summary_paragraphs: list[str] = []
-
-    for index in range(
-        0,
-        len(summary_sentences),
-        2,
-    ):
-        paragraph_sentences = (
-            summary_sentences[index:index + 2]
-        )
-
-        paragraph = ". ".join(
-            paragraph_sentences
-        )
-
-        if not paragraph.endswith("."):
-            paragraph += "."
-
-        summary_paragraphs.append(
-            (
-                "<p style='"
-                "margin:0 0 0.9rem 0;"
-                "'>"
-                f"{html.escape(paragraph)}"
-                "</p>"
-            )
-        )
-
-    career_summary_text_html = "".join(
-        summary_paragraphs
-    )
-
     st.markdown(
-        (
-            "<style>"
-
-            ".player-career-summary {"
-            "display:grid;"
-            "grid-template-columns:7rem minmax(0, 1fr);"
-            "gap:1.5rem;"
-            "align-items:start;"
-            "padding:1.25rem 1.45rem;"
-            "margin:0 0 1rem 0;"
-            "border-radius:0 0 0.8rem 0.8rem;"
-            "background:var(--swc-summary-bg);"
-            "border:1px solid rgba(70,150,220,0.18);"
-            "border-top:none;"
-            "}"
-
-            ".player-career-summary-label {"
-            "font-size:0.78rem;"
-            "font-weight:750;"
-            "letter-spacing:0.04em;"
-            "color:var(--swc-text-720);"
-            "padding-top:0.15rem;"
-            "}"
-
-            ".player-career-summary-text {"
-            "font-size:1rem;"
-            "line-height:1.75;"
-            "}"
-
-            ".player-career-summary-text p:last-child {"
-            "margin-bottom:0 !important;"
-            "}"
-
-            "@media (max-width:800px) {"
-
-            ".player-career-summary {"
-            "grid-template-columns:1fr;"
-            "gap:0.75rem;"
-            "padding:1.25rem 1.4rem;"
-            "}"
-
-            "}"
-
-            "</style>"
-
-            "<div class='player-career-summary'>"
-
-            "<div class='player-career-summary-label'>"
-            "CAREER<br>SUMMARY"
-            "</div>"
-
-            "<div class='player-career-summary-text'>"
-            f"{career_summary_text_html}"
-            "</div>"
-
-            "</div>"
+        summary_box_html(
+            "Career<br>Summary",
+            narrative_paragraphs_html(career_summary),
+            attached=True,
         ),
         unsafe_allow_html=True,
     )

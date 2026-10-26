@@ -14,7 +14,11 @@ from dashboard_pages.navigation_routes import (
     player_profile_url,
     tournament_archive_url,
 )
-from dashboard_pages.ui_components import dashboard_table_html
+from dashboard_pages.ui_components import (
+    dashboard_table_html,
+    narrative_paragraphs_html,
+    summary_box_html,
+)
 from text_format import format_date, format_elo, format_ordinal
 from tournament.archived_bracket import build_archived_bracket_matches
 
@@ -582,66 +586,12 @@ def render_matchups(
         narratives.generate_rivalry_summary(h2h)
     )
 
-    summary_sentences = [
-        sentence.strip()
-        for sentence in rivalry_summary.split(". ")
-        if sentence.strip()
-    ]
-    summary_paragraphs = []
-    for index in range(0, len(summary_sentences), 2):
-        paragraph = ". ".join(summary_sentences[index:index + 2])
-        if not paragraph.endswith("."):
-            paragraph += "."
-        summary_paragraphs.append(
-            f"<p>{html.escape(paragraph)}</p>"
-        )
-    rivalry_summary_text_html = "".join(summary_paragraphs)
-
-    rivalry_summary_html = (
-        "<style>"
-        ".rivalry-summary {"
-        "display:grid;"
-        "grid-template-columns:8rem minmax(0,1fr);"
-        "gap:1.5rem;"
-        "align-items:start;"
-        "padding:1.25rem 1.45rem;"
-        "margin:0 0 1rem 0;"
-        "border:1px solid rgba(70,150,220,0.18);"
-        "border-top:none;"
-        "border-radius:0 0 0.8rem 0.8rem;"
-        "background:var(--swc-summary-bg);"
-        "}"
-        ".rivalry-summary-label {"
-        "padding-top:0.15rem;"
-        "font-size:0.78rem;"
-        "font-weight:750;"
-        "letter-spacing:0.04em;"
-        "color:var(--swc-text-720);"
-        "}"
-        ".rivalry-summary-text {"
-        "font-size:1rem;"
-        "line-height:1.75;"
-        "}"
-        ".rivalry-summary-text p {margin:0 0 0.9rem;}"
-        ".rivalry-summary-text p:last-child {margin-bottom:0;}"
-        "@media (max-width:700px) {"
-        ".rivalry-summary {"
-        "grid-template-columns:1fr;"
-        "gap:0.75rem;"
-        "padding:1.15rem 1.25rem;"
-        "}"
-        "}"
-        "</style>"
-        "<div class='rivalry-summary'>"
-        "<div class='rivalry-summary-label'>"
-        "RIVALRY<br>SUMMARY"
-        "</div>"
-        "<div class='rivalry-summary-text'>"
-        f"{rivalry_summary_text_html}"
-        "</div></div>"
-    )
     st.markdown(
-        rivalry_summary_html,
+        summary_box_html(
+            "Rivalry<br>Summary",
+            narrative_paragraphs_html(rivalry_summary),
+            attached=True,
+        ),
         unsafe_allow_html=True,
     )
 

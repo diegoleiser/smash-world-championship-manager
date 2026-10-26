@@ -259,6 +259,11 @@ class DashboardSmokeTests(unittest.TestCase):
         self.assertEqual(len(style_blocks), 1)
         self.assertTrue(textwrap.dedent(style_blocks[0]).strip().startswith("<style>"))
         self.assertNotIn(".stApp {", style_blocks[0])
+        summary_style_blocks = [value for value in markdown if ".dash-summary {" in value]
+        self.assertEqual(len(summary_style_blocks), 1)
+        self.assertTrue(
+            textwrap.dedent(summary_style_blocks[0]).strip().startswith("<style>")
+        )
         self.assertGreater(
             sum('class="control-table-scroll"' in value for value in markdown),
             1,

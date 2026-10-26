@@ -14,7 +14,9 @@ import narratives
 from dashboard_pages.navigation_routes import player_profile_url
 from dashboard_pages.ui_components import (
     dashboard_table_html,
+    narrative_paragraphs_html,
     selector_card_styles,
+    summary_box_html,
 )
 from dashboard_pages.upset_format import (
     UPSET_CAPTION,
@@ -40,58 +42,7 @@ def _archived_tournament_selector_styles() -> str:
 def _tournament_recap_html(recap: str) -> str:
     """Return the archived tournament recap in the shared summary style."""
 
-    sentences = [
-        sentence.strip()
-        for sentence in recap.split(". ")
-        if sentence.strip()
-    ]
-    paragraphs = []
-    for index in range(0, len(sentences), 2):
-        paragraph = ". ".join(sentences[index:index + 2])
-        if not paragraph.endswith("."):
-            paragraph += "."
-        paragraphs.append(f"<p>{html.escape(paragraph)}</p>")
-    recap_html = "".join(paragraphs)
-
-    return f"""
-    <style>
-    .tournament-recap {{
-        display: grid;
-        grid-template-columns: 9rem minmax(0, 1fr);
-        gap: 2rem;
-        align-items: start;
-        margin: 0 0 1rem;
-        padding: 1.4rem 1.6rem;
-        border: 1px solid rgba(70, 150, 220, 0.18);
-        border-radius: 0.8rem;
-        background: var(--swc-summary-bg);
-    }}
-    .tournament-recap-label {{
-        padding-top: 0.15rem;
-        font-size: 0.78rem;
-        font-weight: 750;
-        letter-spacing: 0.04em;
-        color:var(--swc-text-720);
-    }}
-    .tournament-recap-text {{
-        font-size: 1rem;
-        line-height: 1.75;
-    }}
-    .tournament-recap-text p {{ margin: 0 0 0.9rem; }}
-    .tournament-recap-text p:last-child {{ margin-bottom: 0; }}
-    @media (max-width: 800px) {{
-        .tournament-recap {{
-            grid-template-columns: 1fr;
-            gap: 0.75rem;
-            padding: 1.25rem 1.4rem;
-        }}
-    }}
-    </style>
-    <div class="tournament-recap">
-      <div class="tournament-recap-label">TOURNAMENT<br>SUMMARY</div>
-      <div class="tournament-recap-text">{recap_html}</div>
-    </div>
-    """
+    return summary_box_html("Tournament<br>Summary", narrative_paragraphs_html(recap))
 
 
 def _archived_tournament_header_html(
