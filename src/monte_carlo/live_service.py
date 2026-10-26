@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-import smash_statistics as stats
 from db.connection import open_sqlite_connection
 from monte_carlo.group_simulation import SimulationPlayer
 from monte_carlo.bracket_continuation import (
@@ -24,6 +23,7 @@ from monte_carlo.live_multi_group import (
     forecast_live_groups,
 )
 from monte_carlo.model import CombinedModel
+from smash_stats.elo_history import get_elo_ranking
 from tournament.bracket_constants import ENTRY_SPLIT_BY_GROUP_SEED
 from tournament.bracket_seeding import get_bracket_size
 from tournament.drafts import (
@@ -54,7 +54,7 @@ def load_live_draft_group_states(
 
     elo_by_player_id = {
         str(row["player_id"]): float(row["elo"])
-        for row in stats.get_elo_ranking(db_path, active_only=False)
+        for row in get_elo_ranking(db_path, active_only=False)
     }
     with open_sqlite_connection(db_path) as connection:
         draft = connection.execute(

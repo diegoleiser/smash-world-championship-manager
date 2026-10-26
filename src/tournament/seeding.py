@@ -5,8 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Callable
 
-import smash_statistics as stats
 from db.connection import open_sqlite_connection
+from smash_stats.elo_history import get_elo_ranking
 from tournament.bracket_planning import BRACKET_SIDE_WINNERS, get_bracket_size
 from tournament.participants import _draft_has_group_matches
 
@@ -186,7 +186,7 @@ def get_automatic_seed_order(
             "At least one participant is required before generating seeds."
         )
 
-    ranking = stats.get_elo_ranking(
+    ranking = get_elo_ranking(
         db_path,
         active_only=False,
     )

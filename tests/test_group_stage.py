@@ -20,6 +20,7 @@ if str(SRC_DIR) not in sys.path:
 import tournament_manager as tournament  # noqa: E402
 from tournament import group_stage_pairings  # noqa: E402
 from tournament import group_stage_ranking  # noqa: E402
+from tournament import group_stage_service  # noqa: E402
 from tournament import group_stage_standings  # noqa: E402
 
 
@@ -223,7 +224,7 @@ class GroupStageDatabaseTestCase(unittest.TestCase):
                 )
 
         self.elo_patch = patch.object(
-            tournament.stats,
+            group_stage_service,
             "get_elo_ranking",
             return_value=[
                 {
