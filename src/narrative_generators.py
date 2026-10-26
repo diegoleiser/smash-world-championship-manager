@@ -818,55 +818,6 @@ def _count_close_sets(
     return close_sets
 
 
-def _largest_elo_upset(
-    matches: list[dict[str, Any]],
-    elo_changes: list[dict[str, Any]],
-) -> dict[str, Any] | None:
-    """
-    Finds the largest win by a player with a lower pre-tournament Elo.
-
-    Elo ratings from before the tournament are used, rather than ratings
-    recalculated after every individual set.
-    """
-
-    elo_before = {
-        str(row["Players"]): float(row["Elo Before"])
-        for row in elo_changes
-    }
-
-    biggest_upset: dict[str, Any] | None = None
-
-    for match in matches:
-        winner = match.get("winner")
-        player_1 = match.get("player_1")
-        player_2 = match.get("player_2")
-
-        if not winner or not player_1 or not player_2:
-            continue
-
-        loser = player_2 if winner == player_1 else player_1
-
-        winner_elo = elo_before.get(str(winner))
-        loser_elo = elo_before.get(str(loser))
-
-        if winner_elo is None or loser_elo is None:
-            continue
-
-        elo_gap = loser_elo - winner_elo
-
-        if elo_gap <= 0:
-            continue
-
-        if biggest_upset is None or elo_gap > biggest_upset["elo_gap"]:
-            biggest_upset = {
-                "winner": str(winner),
-                "loser": str(loser),
-                "elo_gap": elo_gap,
-                "tournament": match.get("tournament"),
-            }
-
-    return biggest_upset
-
 def _select_milestone(
     milestones: list[str] | None,
 ) -> str | None:
@@ -910,8 +861,13 @@ def generate_tournament_summary(
     defending_champion: str | None = None,
     milestones: list[str] | None = None,
     story_context: dict[str, Any] | None = None,
+    biggest_upset: dict[str, Any] | None = None,
 ) -> str:
-    """Generates a rule-based recap for one tournament."""
+    """Generates a rule-based recap for one tournament.
+
+    ``biggest_upset`` is the tournament's top entry from
+    ``smash_stats.upsets.get_upsets`` (Elo before the Set), if any.
+    """
 
     tournament_number = int(tournament["tournament_number"])
     tournament_name = f"WC {tournament_number:02d}"
@@ -1160,8 +1116,6 @@ def generate_tournament_summary(
                 elo_sentence += "."
 
             sentences.append(elo_sentence)
-
-    biggest_upset = _largest_elo_upset(matches, elo_changes)
 
     if biggest_upset:
         sentences.append(
