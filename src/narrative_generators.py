@@ -6,6 +6,7 @@ from __future__ import annotations
 from typing import Any
 
 from narrative_stories import select_stories
+from text_format import format_ordinal
 
 from narrative_common import (
     _select_preview_sentences,
@@ -648,7 +649,7 @@ def generate_player_summary(
         placement = int(best_result)
         sentences.append(
             f"Their best tournament finish so far is "
-            f"{_ordinal(placement)} place."
+            f"{format_ordinal(placement)} place."
         )
 
     if longest_win_streak >= 3:
@@ -703,7 +704,7 @@ def generate_player_summary(
         context = []
         if titles == 0 and best_result is not None:
             context.append(
-                f"Their best tournament finish so far is {_ordinal(int(best_result))} place."
+                f"Their best tournament finish so far is {format_ordinal(int(best_result))} place."
             )
         if best_elo_event and best_elo_event.get("tournament") and float(best_elo_event.get("elo_change", 0)) > 0:
             context.append(
@@ -899,20 +900,6 @@ def _select_milestone(
         default=None,
     )
 
-def _ordinal(number: int) -> str:
-    """Formats an integer as an English ordinal number."""
-
-    if 10 <= number % 100 <= 20:
-        suffix = "th"
-    else:
-        suffix = {
-            1: "st",
-            2: "nd",
-            3: "rd",
-        }.get(number % 10, "th")
-
-    return f"{number}{suffix}"
-
 def generate_tournament_summary(
     tournament: dict[str, Any],
     participants: list[dict[str, Any]],
@@ -975,14 +962,14 @@ def generate_tournament_summary(
     elif winner_title_number and winner_title_number > 1:
         sentences.append(
             f"The victory marked {winner}'s "
-            f"{_ordinal(winner_title_number)} World Championship title."
+            f"{format_ordinal(winner_title_number)} World Championship title."
         )
 
     title_streak = int(story_context.get("winner_title_streak") or 0)
     previous_title = story_context.get("previous_title")
     if title_streak >= 2:
         sentences.append(
-            f"It was {winner}'s {_ordinal(title_streak)} consecutive "
+            f"It was {winner}'s {format_ordinal(title_streak)} consecutive "
             f"championship."
         )
     elif (
@@ -1012,7 +999,7 @@ def generate_tournament_summary(
         )
         previous_placement = int(winner_previous_placement["placement"])
         sentences.append(
-            f"The win completed a rise from {_ordinal(previous_placement)} "
+            f"The win completed a rise from {format_ordinal(previous_placement)} "
             f"place at {f'WC {previous_number:02d}'}, {winner}'s previous "
             f"appearance."
         )
@@ -1049,7 +1036,7 @@ def generate_tournament_summary(
     ):
         sentences.append(
             f"Defending champion {defending_champion}'s title defence ended "
-            f"in {_ordinal(int(defending_result['placement']))} place."
+            f"in {format_ordinal(int(defending_result['placement']))} place."
         )
 
     # Main tournament performance
@@ -1127,7 +1114,7 @@ def generate_tournament_summary(
         sentences.append(
             f"{player_name} produced the strongest result relative to the "
             f"initial seed, climbing from #{seed} to "
-            f"{_ordinal(placement)} place."
+            f"{format_ordinal(placement)} place."
         )
 
     biggest_improvement = story_context.get("biggest_placement_improvement")
@@ -1141,8 +1128,8 @@ def generate_tournament_summary(
         current_placement = int(biggest_improvement["current_placement"])
         sentences.append(
             f"{improved_player} made the largest jump from a previous "
-            f"appearance, improving from {_ordinal(previous_placement)} at "
-            f"WC {previous_number:02d} to {_ordinal(current_placement)}."
+            f"appearance, improving from {format_ordinal(previous_placement)} at "
+            f"WC {previous_number:02d} to {format_ordinal(current_placement)}."
         )
     # Elo and upset storylines
     if elo_changes:

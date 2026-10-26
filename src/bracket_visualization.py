@@ -818,7 +818,7 @@ def _format_score(
     return str(score)
 
 
-def _get_status_label(
+def match_status_label(
     status: str,
 ) -> str:
     """Return a readable label for one match status."""
@@ -928,7 +928,7 @@ def _render_match_card(
     )
 
     safe_status = html.escape(
-        _get_status_label(status)
+        match_status_label(status)
     )
 
     return (

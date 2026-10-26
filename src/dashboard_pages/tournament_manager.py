@@ -26,6 +26,7 @@ from dashboard_pages.ui_components import (
     mobile_control_center_card_styles,
     mobile_seeding_styles,
     up_next_matchup_html,
+    versus_header_html,
 )
 from monte_carlo.artifacts import ArtifactError, load_artifact
 from monte_carlo.live_service import (
@@ -2533,36 +2534,11 @@ def render_tournament_manager(
                                             player_2_name = str(match["player_2"])
 
                                             st.markdown(
-                                                (
-                                                    '<div style="'
-                                                    'display:grid;'
-                                                    'grid-template-columns:1fr auto 1fr;'
-                                                    'align-items:center;'
-                                                    'gap:1rem;'
-                                                    'margin:0.25rem 0 1rem 0;'
-                                                    '">'
-                                                    '<div style="'
-                                                    'text-align:right;'
-                                                    'font-size:1.65rem;'
-                                                    'font-weight:750;'
-                                                    '">'
-                                                    f'{html.escape(player_1_name)}'
-                                                    '</div>'
-                                                    '<div style="'
-                                                    'opacity:0.55;'
-                                                    'font-size:0.9rem;'
-                                                    'font-weight:700;'
-                                                    '">'
-                                                    'VS'
-                                                    '</div>'
-                                                    '<div style="'
-                                                    'text-align:left;'
-                                                    'font-size:1.65rem;'
-                                                    'font-weight:750;'
-                                                    '">'
-                                                    f'{html.escape(player_2_name)}'
-                                                    '</div>'
-                                                    '</div>'
+                                                versus_header_html(
+                                                    player_1_name,
+                                                    player_2_name,
+                                                    name_size="1.65rem",
+                                                    margin="0.25rem 0 1rem 0",
                                                 ),
                                                 unsafe_allow_html=True,
                                             )
@@ -3312,16 +3288,8 @@ def render_tournament_manager(
 
                         match_status = str(match["status"])
 
-                        status_display = {
-                            "waiting": "Waiting",
-                            "pending": "Ready",
-                            "completed": "Played",
-                            "forfeit": "W–L",
-                            "bye": "Bye",
-                            "cancelled": "Cancelled",
-                        }.get(
-                            match_status,
-                            match_status.title(),
+                        status_display = (
+                            bracket_visualization.match_status_label(match_status)
                         )
 
                         if (
@@ -3355,36 +3323,11 @@ def render_tournament_manager(
                             expanded=False,
                         ):
                             st.markdown(
-                                (
-                                    '<div style="'
-                                    'display:grid;'
-                                    'grid-template-columns:1fr auto 1fr;'
-                                    'align-items:center;'
-                                    'gap:1rem;'
-                                    'margin:0.25rem 0 1rem 0;'
-                                    '">'
-                                    '<div style="'
-                                    'text-align:right;'
-                                    'font-size:1.5rem;'
-                                    'font-weight:750;'
-                                    '">'
-                                    f'{html.escape(player_1_name)}'
-                                    '</div>'
-                                    '<div style="'
-                                    'opacity:0.55;'
-                                    'font-size:0.9rem;'
-                                    'font-weight:700;'
-                                    '">'
-                                    'VS'
-                                    '</div>'
-                                    '<div style="'
-                                    'text-align:left;'
-                                    'font-size:1.5rem;'
-                                    'font-weight:750;'
-                                    '">'
-                                    f'{html.escape(player_2_name)}'
-                                    '</div>'
-                                    '</div>'
+                                versus_header_html(
+                                    player_1_name,
+                                    player_2_name,
+                                    name_size="1.5rem",
+                                    margin="0.25rem 0 1rem 0",
                                 ),
                                 unsafe_allow_html=True,
                             )
