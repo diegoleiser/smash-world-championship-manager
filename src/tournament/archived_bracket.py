@@ -626,3 +626,30 @@ def archived_match_round_label(
         or match["challonge_round"]
         or "–"
     )
+
+
+def sort_group_matches_by_round(
+    matches: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Order group sets by group and round, keeping the given order within a round.
+
+    Sets are loaded chronologically, which interleaves rounds whenever
+    completion times are identical or sets were played out of schedule.
+    Labels without a recognizable round number leave the order untouched.
+    """
+
+    def sort_key(match: dict[str, Any]) -> tuple[str, int] | None:
+        label = str(match.get("round_label") or "")
+        if label.strip().isdigit():
+            return "", int(label)
+        found = re.search(r"round\s*(\d+)", label, flags=re.IGNORECASE)
+        if found is None:
+            return None
+        group_name = label[: found.start()].strip(" ·-–").casefold()
+        return group_name, int(found.group(1))
+
+    keys = [sort_key(match) for match in matches]
+    if any(key is None for key in keys):
+        return list(matches)
+    order = sorted(range(len(matches)), key=lambda index: keys[index])
+    return [matches[index] for index in order]

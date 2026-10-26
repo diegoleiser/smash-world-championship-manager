@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+from datetime import date
 from pathlib import Path
 from typing import Any, Callable
 
@@ -1114,7 +1115,7 @@ def render_tournament_manager(
 
         tournament_date = st.date_input(
             "Tournament date",
-            value=None,
+            value=date.today(),
         )
 
         create_submitted = st.form_submit_button(

@@ -9,6 +9,7 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
+from dashboard_pages.forecast_format import default_participant_ids
 from monte_carlo.artifacts import ArtifactError, load_artifact
 from monte_carlo.group_simulation import SimulationPlayer
 from monte_carlo.simulation import SimulationResult, simulate_pre_tournament
@@ -76,21 +77,10 @@ def render_monte_carlo(
         str(row["player_id"]): float(row["elo"])
         for row in elo_rows
     }
-    core_player_ids = [
-        str(player["player_id"])
-        for player in available_players
-        if (
-            int(player.get("core_player", 0)) == 1
-            and int(player.get("active", 0)) == 1
-        )
-    ]
-    default_player_ids = sorted(
-        core_player_ids,
-        key=lambda player_id: (
-            -elo_by_player_id.get(player_id, 1000.0),
-            str(player_by_id[player_id]["display_name"]).casefold(),
-        ),
-    )[:7]
+    default_player_ids = default_participant_ids(
+        available_players,
+        elo_by_player_id,
+    )
     selected_ids = st.multiselect(
         "Participants",
         options=list(player_by_id),

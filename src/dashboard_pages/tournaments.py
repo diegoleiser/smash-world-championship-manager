@@ -17,6 +17,7 @@ from tournament.archived_bracket import (
     archived_match_round_label,
     build_archived_bracket_matches,
     build_archived_bracket_routes,
+    sort_group_matches_by_round,
 )
 from tournament.group_stage_standings import calculate_group_standings
 
@@ -789,11 +790,11 @@ def render_tournaments(
         participants,
         changes,
     )
-    group_phase_matches = [
+    group_phase_matches = sort_group_matches_by_round([
         match
         for match in matches
         if str(match.get("stage") or "") in {"group", "group_stage"}
-    ]
+    ])
     bracket_phase_matches = [
         match
         for match in matches
