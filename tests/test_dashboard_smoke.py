@@ -43,6 +43,7 @@ PAGE_TITLES = {
     "Players": "👤 Player profile",
     "Matchups": "🤝 Matchups",
     "Tournaments": "🏆 Tournaments",
+    "Hall of Fame": "🏛️ Hall of Fame",
     "Tournament Manager": "🛠 Tournament Manager",
     "Monte Carlo": "Monte Carlo",
 }
@@ -226,6 +227,23 @@ class DashboardSmokeTests(unittest.TestCase):
 
         without_upset = self.run_app(page="Tournaments", tournament="1")
         self.assertNotIn("⚡ Upsets", [element.value for element in without_upset.subheader])
+
+    def test_hall_of_fame_shows_record_groups_and_recent_milestones(self) -> None:
+        app = self.run_app(page="Hall of Fame")
+        subheaders = [element.value for element in app.subheader]
+
+        for group in ("Championships", "Performance", "Elo Ranking", "Rivalries"):
+            self.assertIn(group, subheaders)
+        self.assertIn("Recent Milestones", subheaders)
+        card_grids = [
+            element.value
+            for element in app.markdown
+            if element.value.startswith('<div class="hof-grid">')
+        ]
+        self.assertEqual(len(card_grids), 4)
+        self.assertIn('<header class="hof-card-title">Most Titles</header>', card_grids[0])
+        self.assertIn("/players?player_id=", card_grids[0])
+        self.assertNotIn("Losing Streak", "".join(card_grids))
 
     def test_matchup_comparison_renders_for_selected_matrix_cell(self) -> None:
         app = self.run_app(page="Matchups")

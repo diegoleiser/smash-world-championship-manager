@@ -213,6 +213,7 @@ class MatchupsPageBoundaryTests(unittest.TestCase):
         self.assertIn("st.navigation(", dashboard_source)
         self.assertIn('url_path="players"', dashboard_source)
         self.assertIn('url_path="tournaments"', dashboard_source)
+        self.assertIn('url_path="hall-of-fame"', dashboard_source)
         self.assertIn("st.switch_page(", dashboard_source)
         self.assertNotIn("st.sidebar.radio(", dashboard_source)
         self.assertNotIn('key="navigation_page"', dashboard_source)

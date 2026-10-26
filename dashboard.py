@@ -18,6 +18,7 @@ if str(SRC_DIR) not in sys.path:
 
 try:
     import bracket_visualization
+    from dashboard_pages import hall_of_fame as hall_of_fame_page
     from dashboard_pages import home as home_page
     from dashboard_pages import matchups as matchups_page
     from dashboard_pages import monte_carlo as monte_carlo_page
@@ -164,6 +165,16 @@ def load_upsets() -> list[dict[str, Any]]:
     """Loads all archive upsets, biggest Elo gap first."""
 
     return stats.get_upsets(DB_PATH)
+
+
+@st.cache_data
+def load_hall_of_fame(include_inactive: bool) -> list[dict[str, Any]]:
+    """Loads the Hall of Fame records with their top three holders."""
+
+    return stats.get_hall_of_fame(
+        DB_PATH,
+        active_only=not include_inactive,
+    )
 
 
 @st.cache_data
@@ -1545,6 +1556,15 @@ def navigation_tournaments() -> None:
     show_tournaments(_include_inactive_players())
 
 
+def navigation_hall_of_fame() -> None:
+    hall_of_fame_page.render_hall_of_fame(
+        _include_inactive_players(),
+        load_hall_of_fame=load_hall_of_fame,
+        load_tournaments=load_tournaments,
+        load_tournament_milestones=load_tournament_milestones,
+    )
+
+
 def navigation_tournament_manager() -> None:
     show_tournament_manager()
 
@@ -1585,6 +1605,12 @@ def main() -> None:
             title="Tournaments",
             icon="🏆",
             url_path="tournaments",
+        ),
+        st.Page(
+            navigation_hall_of_fame,
+            title="Hall of Fame",
+            icon="🏛️",
+            url_path="hall-of-fame",
         ),
         st.Page(
             navigation_tournament_manager,
