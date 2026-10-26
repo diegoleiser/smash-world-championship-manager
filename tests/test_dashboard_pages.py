@@ -216,6 +216,7 @@ class MatchupsPageBoundaryTests(unittest.TestCase):
         self.assertIn("st.switch_page(", dashboard_source)
         self.assertNotIn("st.sidebar.radio(", dashboard_source)
         self.assertNotIn('key="navigation_page"', dashboard_source)
+        self.assertNotIn("Version 0.1.0", dashboard_source)
 
     def test_monte_carlo_declares_every_data_dependency(self) -> None:
         self.assert_render_parameters(
