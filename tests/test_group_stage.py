@@ -743,9 +743,9 @@ class GlobalGroupRankingTests(GroupStageDatabaseTestCase):
                     "total_matches": 3,
                     "decided_matches": 3,
                     "standings": [
-                        ranked_player("diego", 1, 50.0),
-                        ranked_player("beniam", 2, 50.0),
-                        ranked_player("frutos", 3, 50.0),
+                        ranked_player("drew", 1, 50.0),
+                        ranked_player("casey", 2, 50.0),
+                        ranked_player("ellis", 3, 50.0),
                     ],
                 },
                 {
@@ -756,8 +756,8 @@ class GlobalGroupRankingTests(GroupStageDatabaseTestCase):
                     "total_matches": 1,
                     "decided_matches": 1,
                     "standings": [
-                        ranked_player("adem", 1, 100.0),
-                        ranked_player("ammar", 2, 0.0),
+                        ranked_player("avery", 1, 100.0),
+                        ranked_player("blake", 2, 0.0),
                     ],
                 },
             ],
@@ -769,7 +769,7 @@ class GlobalGroupRankingTests(GroupStageDatabaseTestCase):
                 player["player_id"]
                 for player in ranking["ranking"]
             ],
-            ["adem", "diego", "ammar", "beniam", "frutos"],
+            ["avery", "drew", "blake", "casey", "ellis"],
         )
         self.assertEqual(
             [

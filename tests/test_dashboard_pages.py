@@ -451,7 +451,7 @@ class TournamentControlCenterTests(unittest.TestCase):
     def test_dashboard_table_supports_opt_in_mobile_cards(self) -> None:
         markup = dashboard_table_html(
             ["Player", "Elo"],
-            [["Tamira", "1234.5"], ["Gianni", "1200.0"]],
+            [["Harper", "1234.5"], ["Finley", "1200.0"]],
             columns="2fr 1fr",
             emphasis_column=0,
             mobile_cards=True,
@@ -474,7 +474,7 @@ class TournamentControlCenterTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             dashboard_table_html(
                 ["Player"],
-                [["Tamira"]],
+                [["Harper"]],
                 columns="1fr",
                 mobile_cards=True,
                 mobile_visible_rows=0,
@@ -483,7 +483,7 @@ class TournamentControlCenterTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             dashboard_table_html(
                 ["Player"],
-                [["Tamira"]],
+                [["Harper"]],
                 columns="1fr",
                 mobile_cards=True,
                 mobile_card_variant="unknown",
@@ -491,14 +491,14 @@ class TournamentControlCenterTests(unittest.TestCase):
 
         tournament_markup = dashboard_table_html(
             ["Tournament", "Date", "Champion", "Players"],
-            [["WC 13", "28 Feb 2026", "Tamira", "7"]],
+            [["WC 13", "28 Feb 2026", "Harper", "7"]],
             columns="repeat(4, 1fr)",
             mobile_cards=True,
             mobile_card_variant="tournament",
         )
         titles_markup = dashboard_table_html(
             ["Rank", "Player", "Titles"],
-            [["#1", "Gianni", "5 Titles"]],
+            [["#1", "Finley", "5 Titles"]],
             columns="repeat(3, 1fr)",
             mobile_cards=True,
             mobile_card_variant="titles",
@@ -508,7 +508,7 @@ class TournamentControlCenterTests(unittest.TestCase):
 
         history_markup = dashboard_table_html(
             ["Tournament", "Date", "Round", "Winner", "Result"],
-            [["WC 13", "28 Feb 2026", "Group Round 3", "Diego", "1–2"]],
+            [["WC 13", "28 Feb 2026", "Group Round 3", "Drew", "1–2"]],
             columns="repeat(5, 1fr)",
             mobile_cards=True,
             mobile_card_variant="match-history",
@@ -517,14 +517,14 @@ class TournamentControlCenterTests(unittest.TestCase):
 
         standings_markup = dashboard_table_html(
             ["Rank", "Player", "Set Record", "Game Record"],
-            [["#1", "Tamira", "5–1", "11–2"]],
+            [["#1", "Harper", "5–1", "11–2"]],
             columns="repeat(4, 1fr)",
             mobile_cards=True,
             mobile_card_variant="standings",
         )
         match_markup = dashboard_table_html(
             ["Round", "Set", "Result", "Winner"],
-            [["3", "Diego vs Tamira", "1–2", "Tamira"]],
+            [["3", "Drew vs Harper", "1–2", "Harper"]],
             columns="repeat(4, 1fr)",
             mobile_cards=True,
             mobile_card_variant="tournament-match",
@@ -535,7 +535,7 @@ class TournamentControlCenterTests(unittest.TestCase):
         for variant in ("final-standings", "elo-change", "elo-ranking"):
             markup = dashboard_table_html(
                 ["Player"],
-                [["Tamira"]],
+                [["Harper"]],
                 columns="1fr",
                 mobile_cards=True,
                 mobile_card_variant=variant,
@@ -690,14 +690,14 @@ class TournamentManagerPageTests(unittest.TestCase):
         self.assertIn("Losers Bracket", markup)
 
         forecast_markup = compact_metric_strip_html([
-            ("W1M1", "Diego · 74%", "win chance vs Gianni"),
+            ("W1M1", "Drew · 74%", "win chance vs Finley"),
         ])
-        self.assertIn("Diego · 74%", forecast_markup)
-        self.assertIn("win chance vs Gianni", forecast_markup)
+        self.assertIn("Drew · 74%", forecast_markup)
+        self.assertIn("win chance vs Finley", forecast_markup)
         self.assertIn("compact-metric-strip-note", forecast_markup)
 
         finalization_markup = compact_metric_strip_html(
-            [("Champion", "Diego"), ("Participants", 7)],
+            [("Champion", "Drew"), ("Participants", 7)],
             mobile_columns=2,
         )
         self.assertIn(
@@ -803,13 +803,13 @@ class TournamentPageTests(unittest.TestCase):
             {
                 "tournament_number": 3,
                 "tournament_date": "2022-08-28",
-                "winner": "Diego",
+                "winner": "Drew",
             },
             [],
             0,
         )
 
-        self.assertIn("Diego", markup)
+        self.assertIn("Drew", markup)
         self.assertIn("Participants unavailable", markup)
         self.assertIn("Set data unavailable", markup)
         self.assertNotIn("0 Participants", markup)
