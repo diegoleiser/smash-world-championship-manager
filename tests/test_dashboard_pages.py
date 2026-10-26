@@ -478,6 +478,16 @@ class TournamentControlCenterTests(unittest.TestCase):
         self.assertTrue(styles.strip().startswith("<style>"))
         self.assertIn(".control-table-header", styles)
 
+    def test_dashboard_table_cards_follow_the_available_width(self) -> None:
+        styles = dashboard_table_styles()
+
+        self.assertIn("container-type: inline-size", styles)
+        self.assertIn("@container (max-width: 700px)", styles)
+        self.assertIn("@container (min-width: 701px)", styles)
+        self.assertNotIn("@media", styles)
+        self.assertNotIn("min-width: 46rem", styles)
+        self.assertIn("min-width: min-content", styles)
+
     def test_dashboard_table_accepts_ready_cell_markup(self) -> None:
         markup = dashboard_table_html(
             ["Set", "Score"],
