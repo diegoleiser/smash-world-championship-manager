@@ -254,9 +254,8 @@ class MatchupsPageBoundaryTests(unittest.TestCase):
     def test_tournament_recap_uses_shared_summary_card_language(self) -> None:
         markup = _tournament_recap_html("Alpha won <WC 14>.")
 
-        self.assertIn("TOURNAMENT<br>SUMMARY", markup)
-        self.assertIn("background: var(--swc-summary-bg)", markup)
-        self.assertIn("grid-template-columns: 9rem", markup)
+        self.assertIn('<div class="dash-summary-label">Tournament<br>Summary</div>', markup)
+        self.assertIn('class="dash-summary"', markup)
         self.assertIn("Alpha won &lt;WC 14&gt;.", markup)
         self.assertNotIn("Alpha won <WC 14>.", markup)
 

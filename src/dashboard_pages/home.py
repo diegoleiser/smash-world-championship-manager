@@ -17,7 +17,11 @@ from dashboard_pages.navigation_routes import (
 from dashboard_pages.timeline_order import (
     chronological_tournament_labels,
 )
-from dashboard_pages.ui_components import dashboard_table_html
+from dashboard_pages.ui_components import (
+    dashboard_table_html,
+    narrative_paragraphs_html,
+    summary_box_html,
+)
 from dashboard_pages.upset_format import (
     UPSET_CAPTION,
     upset_table,
@@ -651,88 +655,10 @@ def render_home(
         "</div>"
     )
 
-    preview_sentences = [
-        sentence.strip()
-        for sentence in preview_text.split(". ")
-        if sentence.strip()
-    ]
-
-    preview_paragraphs: list[str] = []
-
-    for index in range(
-        0,
-        len(preview_sentences),
-        2,
-    ):
-        paragraph_sentences = (
-            preview_sentences[index:index + 2]
-        )
-
-        paragraph = ". ".join(
-            paragraph_sentences
-        )
-
-        if not paragraph.endswith("."):
-            paragraph += "."
-
-        preview_paragraphs.append(
-            (
-                "<p style='"
-                "margin:0 0 0.9rem 0;"
-                "'>"
-                f"{html.escape(paragraph)}"
-                "</p>"
-            )
-        )
-
-    preview_text_html = "".join(
-        preview_paragraphs
-    )
-
     st.markdown(
-        (
-            "<style>"
-            ".tournament-outlook {"
-            "display:grid;"
-            "grid-template-columns:9rem minmax(0, 1fr);"
-            "gap:2rem;"
-            "align-items:start;"
-            "padding:1.5rem 1.7rem;"
-            "border-radius:0.8rem;"
-            "background:var(--swc-summary-bg);"
-            "border:1px solid rgba(70,150,220,0.18);"
-            "}"
-            ".tournament-outlook-label {"
-            "font-size:0.78rem;"
-            "font-weight:750;"
-            "letter-spacing:0.04em;"
-            "color:var(--swc-text-720);"
-            "padding-top:0.15rem;"
-            "}"
-            ".tournament-outlook-text {"
-            "font-size:1rem;"
-            "line-height:1.75;"
-            "}"
-            ".tournament-outlook-text p:last-child {"
-            "margin-bottom:0 !important;"
-            "}"
-            "@media (max-width:800px) {"
-            ".tournament-outlook {"
-            "grid-template-columns:1fr;"
-            "gap:0.75rem;"
-            "padding:1.25rem 1.4rem;"
-            "}"
-            "}"
-            "</style>"
-
-            "<div class='tournament-outlook'>"
-            "<div class='tournament-outlook-label'>"
-            "TOURNAMENT<br>OUTLOOK"
-            "</div>"
-            "<div class='tournament-outlook-text'>"
-            f"{preview_text_html}"
-            "</div>"
-            "</div>"
+        summary_box_html(
+            "Tournament<br>Outlook",
+            narrative_paragraphs_html(preview_text),
         ),
         unsafe_allow_html=True,
     )

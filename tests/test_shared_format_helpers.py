@@ -4,7 +4,12 @@ import unittest
 
 from bracket_visualization import match_status_label
 from dashboard_pages.player import _summary_pair_html
-from dashboard_pages.ui_components import selector_card_styles, versus_header_html
+from dashboard_pages.ui_components import (
+    narrative_paragraphs_html,
+    selector_card_styles,
+    summary_box_html,
+    versus_header_html,
+)
 from datetime import date, datetime
 
 from text_format import format_date, format_elo, format_elo_change, format_ordinal
@@ -135,6 +140,23 @@ class SummaryPairTests(unittest.TestCase):
         )
         self.assertIn(".rank-summary-highlight .rank-summary-value {color:var(--swc-gold);}", markup)
         self.assertIn("@media (max-width:650px) {.rank-summary-grid {grid-template-columns:1fr;}}", markup)
+
+
+class SummaryBoxTests(unittest.TestCase):
+    def test_narratives_become_escaped_two_sentence_paragraphs(self):
+        self.assertEqual(
+            narrative_paragraphs_html("Alpha won. Beta <lost>. Gamma tied"),
+            "<p>Alpha won. Beta &lt;lost&gt;.</p><p>Gamma tied.</p>",
+        )
+
+    def test_attached_box_joins_the_card_above(self):
+        self.assertEqual(
+            summary_box_html("Career<br>Summary", "<p>x</p>", attached=True),
+            '<div class="dash-summary dash-summary-attached">'
+            '<div class="dash-summary-label">Career<br>Summary</div>'
+            '<div class="dash-summary-text"><p>x</p></div></div>',
+        )
+        self.assertIn('class="dash-summary"', summary_box_html("Label", ""))
 
 
 if __name__ == "__main__":

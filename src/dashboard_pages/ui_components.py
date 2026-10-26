@@ -1592,6 +1592,95 @@ def dashboard_table_styles() -> str:
     """
 
 
+def narrative_paragraphs_html(text: str) -> str:
+    """Split a narrative into escaped paragraphs of two sentences each."""
+
+    sentences = [sentence.strip() for sentence in text.split(". ") if sentence.strip()]
+    paragraphs = []
+    for index in range(0, len(sentences), 2):
+        paragraph = ". ".join(sentences[index:index + 2])
+        if not paragraph.endswith("."):
+            paragraph += "."
+        paragraphs.append(f"<p>{html.escape(paragraph)}</p>")
+    return "".join(paragraphs)
+
+
+def summary_box_html(
+    label_html: str,
+    text_html: str,
+    *,
+    attached: bool = False,
+) -> str:
+    """Return the blue text box with a label column, used for narratives.
+
+    ``attached`` joins the box to the card directly above it.
+    """
+
+    box_class = "dash-summary dash-summary-attached" if attached else "dash-summary"
+    return (
+        f'<div class="{box_class}">'
+        f'<div class="dash-summary-label">{label_html}</div>'
+        f'<div class="dash-summary-text">{text_html}</div>'
+        "</div>"
+    )
+
+
+def summary_box_styles() -> str:
+    """Return the style sheet for summary_box_html.
+
+    The dashboard injects it once per page run, like the table styles.
+    """
+
+    return """
+        <style>
+        .dash-summary {
+            display: grid;
+            grid-template-columns: 9rem minmax(0, 1fr);
+            gap: 2rem;
+            align-items: start;
+            margin: 0.35rem 0 1rem;
+            padding: 1.5rem 1.7rem;
+            border: 1px solid rgba(70, 150, 220, 0.18);
+            border-radius: 0.8rem;
+            background: var(--swc-summary-bg);
+        }
+        .dash-summary-attached {
+            grid-template-columns: 7rem minmax(0, 1fr);
+            gap: 1.5rem;
+            margin-top: 0;
+            padding: 1.25rem 1.45rem;
+            border-top: none;
+            border-radius: 0 0 0.8rem 0.8rem;
+        }
+        .dash-summary-label {
+            padding-top: 0.15rem;
+            color: var(--swc-text-720);
+            font-size: 0.78rem;
+            font-weight: 750;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .dash-summary-text {
+            font-size: 1rem;
+            line-height: 1.75;
+        }
+        .dash-summary-text p {
+            margin: 0 0 0.9rem 0;
+        }
+        .dash-summary-text p:last-child {
+            margin-bottom: 0 !important;
+        }
+        @media (max-width: 800px) {
+            .dash-summary {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+                padding: 1.25rem 1.4rem;
+            }
+        }
+        </style>
+    """
+
+
 def clickable_card_button_styles(
     key_prefix: str,
     *,
