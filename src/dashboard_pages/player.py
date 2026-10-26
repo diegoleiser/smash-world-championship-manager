@@ -15,6 +15,7 @@ from dashboard_pages.navigation_routes import (
     tournament_archive_url,
 )
 from dashboard_pages.ui_components import (
+    dashboard_table_html,
     internal_dashboard_link,
     selector_card_styles,
 )
@@ -215,6 +216,111 @@ def _summary_pair_html(
         + card_html(secondary)
         + "</div>"
     )
+
+
+def tournament_history_table(
+    history: list[dict[str, Any]],
+    format_ordinal: Callable[[int], str],
+) -> dict[str, Any]:
+    """Return dashboard_table_html data for a player's tournaments, newest first."""
+
+    rows = []
+    markup: dict[tuple[int, int], str] = {}
+    highlights: dict[int, str] = {}
+    for row_index, entry in enumerate(reversed(history)):
+        won_tournament = bool(entry.get("won_tournament"))
+        placement = entry.get("placement")
+        if won_tournament:
+            placement_text = "Champion"
+            highlights[row_index] = "champion"
+        elif placement is None:
+            placement_text = "–"
+        else:
+            placement_text = format_ordinal(int(placement))
+        tournament_label = (
+            f"🏆 {entry['tournament']}" if won_tournament else str(entry["tournament"])
+        )
+        formatted_date = format_date(entry.get("date"))
+        record_text = f"{int(entry.get('wins') or 0)}–{int(entry.get('losses') or 0)}"
+        winner = str(entry.get("winner") or "Unknown")
+
+        rows.append([tournament_label, placement_text, record_text, winner])
+        markup[(row_index, 0)] = (
+            '<span><span class="control-table-strong">'
+            + internal_dashboard_link(
+                tournament_label,
+                tournament_archive_url(int(entry["tournament_number"])),
+            )
+            + f'</span><span class="control-table-subline">'
+            f"{html.escape(formatted_date)}</span></span>"
+        )
+        if entry.get("winner_id"):
+            markup[(row_index, 3)] = internal_dashboard_link(
+                winner,
+                player_profile_url(str(entry["winner_id"])),
+            )
+
+    return {
+        "headers": ["Tournament", "Placement", "Record", "Champion"],
+        "rows": rows,
+        "cell_html": markup,
+        "row_highlights": highlights,
+        "columns": (
+            "minmax(9rem,1.3fr) minmax(6rem,0.8fr) "
+            "minmax(5rem,0.6fr) minmax(8rem,1fr)"
+        ),
+    }
+
+
+def opponent_records_table(opponents: list[dict[str, Any]]) -> dict[str, Any]:
+    """Return dashboard_table_html data for a player's records per opponent."""
+
+    rows = []
+    markup: dict[tuple[int, int], str] = {}
+    for row_index, row in enumerate(opponents):
+        wins = int(row["wins"])
+        losses = int(row["losses"])
+        winrate = float(row["winrate"])
+        if wins > losses:
+            result_label, result_class = "Winning record", "control-table-positive"
+            bar_color = "var(--swc-positive)"
+        elif wins < losses:
+            result_label, result_class = "Losing record", "control-table-negative"
+            bar_color = "var(--swc-negative)"
+        else:
+            result_label, result_class = "Even record", "control-table-muted"
+            bar_color = "var(--swc-text-480)"
+        winrate_text = f"{winrate:.1f}%"
+
+        rows.append(
+            [str(row["opponent"]), f"{wins}–{losses}", str(int(row["matches"])), winrate_text]
+        )
+        markup[(row_index, 0)] = (
+            '<span><span class="control-table-strong">'
+            + internal_dashboard_link(
+                str(row["opponent"]),
+                player_profile_url(str(row["opponent_id"])),
+            )
+            + f'</span><span class="control-table-subline {result_class}">'
+            f"{result_label}</span></span>"
+        )
+        markup[(row_index, 3)] = (
+            f"<span>{winrate_text}"
+            '<span class="control-table-bar">'
+            '<span class="control-table-bar-fill" style="display:block;'
+            f"width:{max(0.0, min(winrate, 100.0)):.1f}%;"
+            f'background:{bar_color};"></span></span></span>'
+        )
+
+    return {
+        "headers": ["Opponent", "Record", "Sets", "Win Rate"],
+        "rows": rows,
+        "cell_html": markup,
+        "columns": (
+            "minmax(9rem,1.3fr) minmax(5rem,0.7fr) "
+            "minmax(4rem,0.5fr) minmax(7rem,1fr)"
+        ),
+    }
 
 
 def _placement_distribution_data(
@@ -2101,284 +2207,17 @@ def render_player_page(
                 history,
                 format_ordinal,
             )
-            tournament_history_rows: list[str] = []
-
-            for entry in reversed(history):
-                tournament_name = str(
-                    entry["tournament"]
-                )
-
-                formatted_date = format_date(entry.get("date"))
-
-                placement = entry.get(
-                    "placement"
-                )
-
-                if placement is None:
-                    placement_text = "–"
-                else:
-                    placement_text = format_ordinal(
-                        int(placement)
-                    )
-
-                wins = int(
-                    entry.get("wins") or 0
-                )
-                losses = int(
-                    entry.get("losses") or 0
-                )
-
-                record_text = (
-                    f"{wins}–{losses}"
-                )
-
-                won_tournament = bool(
-                    entry.get("won_tournament")
-                )
-
-                tournament_winner = str(
-                    entry.get("winner") or "Unknown"
-                )
-
-                if won_tournament:
-                    placement_text = "Champion"
-                    tournament_icon = "🏆"
-                    row_class = (
-                        "player-tournament-row "
-                        "player-tournament-title-row"
-                    )
-                    result_class = (
-                        "player-tournament-placement "
-                        "player-tournament-champion"
-                    )
-                else:
-                    tournament_icon = ""
-                    row_class = (
-                        "player-tournament-row"
-                    )
-                    result_class = (
-                        "player-tournament-placement"
-                    )
-
-                tournament_name_html = internal_dashboard_link(
-                    f"{tournament_icon} {tournament_name}".strip(),
-                    tournament_archive_url(int(entry["tournament_number"])),
-                    class_name="player-profile-link",
-                )
-                tournament_winner_html = internal_dashboard_link(
-                    tournament_winner,
-                    player_profile_url(str(entry["winner_id"])),
-                    class_name="player-profile-link",
-                )
-
-                tournament_history_rows.append(
-                    (
-                        f"<div class='{row_class}'>"
-
-                        "<div class='player-tournament-main'>"
-                        "<div class='player-tournament-name'>"
-                        f"{tournament_name_html}"
-                        "</div>"
-                        "<div class='player-tournament-date'>"
-                        f"{html.escape(formatted_date)}"
-                        "</div>"
-                        "</div>"
-
-                        f"<div class='{result_class}'>"
-                        f"{html.escape(placement_text)}"
-                        "</div>"
-
-                        "<div class='player-tournament-record'>"
-                        "<div class='player-tournament-record-value'>"
-                        f"{html.escape(record_text)}"
-                        "</div>"
-                        "<div class='player-tournament-record-label'>"
-                        "Record"
-                        "</div>"
-                        "</div>"
-
-                        "<div class='player-tournament-winner'>"
-                        "<div class='player-tournament-winner-name'>"
-                        f"{tournament_winner_html}"
-                        "</div>"
-                        "<div class='player-tournament-winner-label'>"
-                        "TOURNAMENT CHAMPION"
-                        "</div>"
-                        "</div>"
-
-                        "</div>"
-                    )
-                )
-
-            tournament_history_html = (
-                "<style>"
-
-                ".player-tournament-list {"
-                "width:100%;"
-                "max-width:78rem;"
-                "margin:0 auto;"
-                "border:1px solid rgba(128,128,128,0.30);"
-                "border-radius:0.8rem;"
-                "overflow:hidden;"
-                "}"
-
-                ".player-tournament-row {"
-                "display:grid;"
-                "grid-template-columns:repeat(4, minmax(0, 1fr));"
-                "align-items:center;"
-                "gap:0.75rem;"
-                "min-height:4.4rem;"
-                "padding:0.75rem 1rem;"
-                "border-bottom:"
-                "1px solid rgba(128,128,128,0.20);"
-                "}"
-
-                ".player-tournament-row:last-child {"
-                "border-bottom:none;"
-                "}"
-
-                ".player-tournament-title-row {"
-                "background:rgba(212,175,55,0.08);"
-                "border-left:3px solid rgba(255,205,70,0.75);"
-                "padding-left:calc(1.1rem - 3px);"
-                "}"
-
-                ".player-tournament-main {"
-                "text-align:left;"
-                "}"
-
-
-                ".player-tournament-name {"
-                "font-size:1.08rem;"
-                "font-weight:800;"
-                "}"
-
-                ".player-tournament-date {"
-                "font-size:0.82rem;"
-                "font-weight:650;"
-                "color:var(--swc-text-580);"
-                "margin-top:0.2rem;"
-                "}"
-
-                ".player-tournament-placement {"
-                "font-size:1.02rem;"
-                "font-weight:750;"
-                "text-align:center;"
-                "}"
-
-                ".player-tournament-champion {"
-                "color:var(--swc-gold);"
-                "}"
-
-                ".player-tournament-record {"
-                "text-align:center;"
-                "}"
-
-                ".player-tournament-record-value {"
-                "font-size:1.05rem;"
-                "font-weight:800;"
-                "}"
-
-                ".player-tournament-record-label {"
-                "font-size:0.72rem;"
-                "font-weight:700;"
-                "letter-spacing:0.04em;"
-                "color:var(--swc-text-520);"
-                "text-transform:uppercase;"
-                "margin-top:0.15rem;"
-                "}"
-
-                ".player-tournament-winner {"
-                "text-align:right;"
-                "}"
-
-                ".player-tournament-winner-label {"
-                "font-size:0.7rem;"
-                "font-weight:700;"
-                "letter-spacing:0.04em;"
-                "color:var(--swc-text-520);"
-                "margin-top:0.18rem;"
-                "}"
-
-                ".player-tournament-winner-name {"
-                "font-size:0.98rem;"
-                "font-weight:750;"
-                "margin-top:0;"
-                "}"
-
-                "@media (max-width:1100px) {"
-
-                ".player-tournament-row {"
-                "grid-template-columns:repeat(4, minmax(0, 1fr));"
-                "gap:0.45rem;"
-                "padding:0.7rem 0.8rem;"
-                "}"
-
-                ".player-tournament-winner-label {"
-                "font-size:0.58rem;"
-                "}"
-
-                ".player-tournament-winner-name {"
-                "font-size:0.88rem;"
-                "}"
-
-                "}"
-
-                "@media (max-width:700px) {"
-
-                ".player-tournament-row {"
-                "grid-template-columns:1.25fr 0.85fr 0.8fr 1.1fr;"
-                "gap:0.45rem;"
-                "min-height:5rem;"
-                "padding:0.85rem 0.75rem;"
-                "}"
-
-                ".player-tournament-name {"
-                "font-size:1.05rem;"
-                "}"
-
-                ".player-tournament-date {"
-                "font-size:0.8rem;"
-                "}"
-
-                ".player-tournament-placement {"
-                "font-size:1rem;"
-                "text-align:center;"
-                "}"
-
-                ".player-tournament-record-value {"
-                "font-size:1rem;"
-                "}"
-
-                ".player-tournament-record-label {"
-                "font-size:0.68rem;"
-                "}"
-
-                ".player-tournament-winner-label {"
-                "display:block;"
-                "font-size:0.62rem;"
-                "margin-top:0.15rem;"
-                "}"
-
-                ".player-tournament-winner-name {"
-                "font-size:0.96rem;"
-                "margin-top:0;"
-                "white-space:nowrap;"
-                "overflow:hidden;"
-                "text-overflow:ellipsis;"
-                "}"
-
-                "}"
-
-                "</style>"
-
-                "<div class='player-tournament-list'>"
-                f"{''.join(tournament_history_rows)}"
-                "</div>"
-            )
-
+            history_table = tournament_history_table(history, format_ordinal)
             st.markdown(
-                tournament_history_html,
+                dashboard_table_html(
+                    history_table["headers"],
+                    history_table["rows"],
+                    columns=history_table["columns"],
+                    cell_html=history_table["cell_html"],
+                    row_highlights=history_table["row_highlights"],
+                    emphasis_column=0,
+                    mobile_cards=True,
+                ),
                 unsafe_allow_html=True,
             )
 
@@ -2407,315 +2246,19 @@ def render_player_page(
                 "Records Against All Opponents"
             )
 
-            opponent_rows_html: list[str] = []
-
-            for row in insights["opponents"]:
-                opponent_name = str(
-                    row["opponent"]
-                )
-                opponent_name_html = internal_dashboard_link(
-                    opponent_name,
-                    player_profile_url(str(row["opponent_id"])),
-                    class_name="player-profile-link",
-                )
-
-                wins = int(
-                    row["wins"]
-                )
-                losses = int(
-                    row["losses"]
-                )
-                matches = int(
-                    row["matches"]
-                )
-                winrate = float(
-                    row["winrate"]
-                )
-
-                record_text = (
-                    f"{wins}–{losses}"
-                )
-
-                match_label = (
-                    "set"
-                    if matches == 1
-                    else "sets"
-                )
-
-                if wins > losses:
-                    result_class = (
-                        "opponent-record-positive"
-                    )
-                    result_label = (
-                        "Winning record"
-                    )
-                    bar_color = "var(--swc-positive)"
-
-                elif wins < losses:
-                    result_class = (
-                        "opponent-record-negative"
-                    )
-                    result_label = (
-                        "Losing record"
-                    )
-                    bar_color = "var(--swc-negative)"
-
-                else:
-                    result_class = (
-                        "opponent-record-even"
-                    )
-                    result_label = (
-                        "Even record"
-                    )
-                    bar_color = (
-                        "var(--swc-text-480)"
-                    )
-
-                progress_width = max(
-                    0.0,
-                    min(
-                        winrate,
-                        100.0,
-                    ),
-                )
-
-                opponent_rows_html.append(
-                    (
-                        "<div class='opponent-record-row'>"
-
-                        "<div class='opponent-record-main'>"
-                        "<div class='opponent-record-name'>"
-                        f"{opponent_name_html}"
-                        "</div>"
-                        "<div class='opponent-record-summary "
-                        f"{result_class}'>"
-                        f"{html.escape(result_label)}"
-                        "</div>"
-                        "</div>"
-
-                        "<div class='opponent-record-score'>"
-                        "<div class='opponent-record-score-value'>"
-                        f"{html.escape(record_text)}"
-                        "</div>"
-                        "<div class='opponent-record-label'>"
-                        "RECORD"
-                        "</div>"
-                        "</div>"
-
-                        "<div class='opponent-record-matches'>"
-                        "<div class='opponent-record-matches-value'>"
-                        f"{matches}"
-                        "</div>"
-                        "<div class='opponent-record-label'>"
-                        f"{html.escape(match_label.upper())}"
-                        "</div>"
-                        "</div>"
-
-                        "<div class='opponent-record-rate'>"
-                        "<div class='opponent-record-rate-top'>"
-                        "<span>"
-                        f"{winrate:.1f}%"
-                        "</span>"
-                        "</div>"
-
-                        "<div class='opponent-record-bar'>"
-                        "<div class='opponent-record-bar-fill' "
-                        f"style='width:{progress_width:.1f}%;"
-                        f"background:{bar_color};'>"
-                        "</div>"
-                        "</div>"
-
-                        "<div class='opponent-record-label'>"
-                        "WIN RATE"
-                        "</div>"
-                        "</div>"
-
-                        "</div>"
-                    )
-                )
-
-            opponent_records_html = (
-                "<style>"
-
-                ".opponent-record-list {"
-                "width:100%;"
-                "max-width:78rem;"
-                "margin:0 auto;"
-                "border:1px solid rgba(128,128,128,0.30);"
-                "border-radius:0.8rem;"
-                "overflow:hidden;"
-                "}"
-
-                ".opponent-record-row {"
-                "display:grid;"
-                "grid-template-columns:repeat(4, minmax(0, 1fr));"
-                "align-items:center;"
-                "gap:0.6rem;"
-                "min-height:5rem;"
-                "padding:0.9rem 1.1rem;"
-                "border-bottom:"
-                "1px solid rgba(128,128,128,0.20);"
-                "}"
-
-                ".opponent-record-row:last-child {"
-                "border-bottom:none;"
-                "}"
-
-                ".opponent-record-name {"
-                "font-size:1.1rem;"
-                "font-weight:800;"
-                "}"
-
-                ".opponent-record-summary {"
-                "font-size:0.8rem;"
-                "font-weight:700;"
-                "margin-top:0.2rem;"
-                "}"
-
-                ".opponent-record-positive {"
-                "color:var(--swc-positive);"
-                "}"
-
-                ".opponent-record-negative {"
-                "color:var(--swc-negative);"
-                "}"
-
-                ".opponent-record-even {"
-                "color:var(--swc-text-600);"
-                "}"
-
-                ".opponent-record-score,"
-                ".opponent-record-matches {"
-                "text-align:center;"
-                "}"
-
-                ".opponent-record-main {"
-                "text-align:left;"
-                "}"
-
-                ".opponent-record-rate {"
-                "text-align:right;"
-                "}"
-
-                ".opponent-record-score-value,"
-                ".opponent-record-matches-value {"
-                "font-size:1.1rem;"
-                "font-weight:800;"
-                "}"
-
-                ".opponent-record-label {"
-                "font-size:0.7rem;"
-                "font-weight:700;"
-                "letter-spacing:0.04em;"
-                "color:var(--swc-text-520);"
-                "margin-top:0.15rem;"
-                "}"
-
-                ".opponent-record-rate {"
-                "text-align:right;"
-                "}"
-
-                ".opponent-record-rate-top {"
-                "font-size:1.02rem;"
-                "font-weight:800;"
-                "}"
-
-                ".opponent-record-bar {"
-                "height:0.42rem;"
-                "margin-top:0.45rem;"
-                "border-radius:999px;"
-                "overflow:hidden;"
-                "background:rgba(128,128,128,0.20);"
-                "}"
-
-                ".opponent-record-bar-fill {"
-                "height:100%;"
-                "border-radius:999px;"
-                "}"
-
-                "@media (max-width:1100px) {"
-
-                ".opponent-record-row {"
-                "grid-template-columns:repeat(4, minmax(0, 1fr));"
-                "gap:0.45rem;"
-                "padding:0.8rem 0.9rem;"
-                "}"
-
-                "}"
-
-                "@media (max-width:700px) {"
-
-                ".opponent-record-row {"
-                "grid-template-columns:repeat(4, minmax(0, 1fr));"
-                "gap:0.35rem;"
-                "min-height:5.2rem;"
-                "padding:0.8rem 0.7rem;"
-                "}"
-
-                ".opponent-record-name {"
-                "font-size:1.05rem;"
-                "}"
-
-                ".opponent-record-summary {"
-                "font-size:0.76rem;"
-                "}"
-
-                ".opponent-record-score-value,"
-                ".opponent-record-matches-value,"
-                ".opponent-record-rate-top {"
-                "font-size:1rem;"
-                "}"
-
-                ".opponent-record-label {"
-                "font-size:0.62rem;"
-                "}"
-
-                ".opponent-record-bar {"
-                "height:0.36rem;"
-                "margin-top:0.35rem;"
-                "}"
-
-                ".opponent-record-main {"
-                "min-width:0;"
-                "}"
-
-                ".opponent-record-name {"
-                "white-space:nowrap;"
-                "overflow:hidden;"
-                "text-overflow:ellipsis;"
-                "}"
-
-                ".opponent-record-rate {"
-                "min-width:0;"
-                "}"
-
-                "}"
-
-                ".opponent-record-footer {"
-                "padding:0.7rem 1.1rem;"
-                "border-top:1px solid rgba(128,128,128,0.20);"
-                "background:rgba(128,128,128,0.04);"
-                "font-size:0.78rem;"
-                "font-weight:650;"
-                "color:var(--swc-text-580);"
-                "}"
-
-                "</style>"
-
-                "<div class='opponent-record-list'>"
-                f"{''.join(opponent_rows_html)}"
-
-                "<div class='opponent-record-footer'>"
-                "Ordered by number of sets played."
-                "</div>"
-
-                "</div>"
-            )
-
+            opponent_table = opponent_records_table(insights["opponents"])
             st.markdown(
-                opponent_records_html,
+                dashboard_table_html(
+                    opponent_table["headers"],
+                    opponent_table["rows"],
+                    columns=opponent_table["columns"],
+                    cell_html=opponent_table["cell_html"],
+                    emphasis_column=0,
+                    mobile_cards=True,
+                ),
                 unsafe_allow_html=True,
             )
+            st.caption("Ordered by number of Sets played.")
 
 
         else:

@@ -22,10 +22,13 @@ from dashboard_pages.navigation_routes import (  # noqa: E402
     tournament_archive_url,
 )
 from dashboard_pages.player import (  # noqa: E402
+    opponent_records_table,
+    tournament_history_table,
     _placement_distribution_chart,
     _placement_distribution_data,
     _player_selector_styles,
 )
+from text_format import format_ordinal  # noqa: E402
 from dashboard_pages.tournament_control_center import (  # noqa: E402
     finalization_standings_table_data,
     group_ready_matches,
@@ -341,6 +344,46 @@ class MatchupsPageBoundaryTests(unittest.TestCase):
                 "show_bracket_match_dialog",
             },
         )
+
+
+class PlayerProfileTableTests(unittest.TestCase):
+    def test_tournament_history_is_newest_first_with_champion_row(self) -> None:
+        history = [
+            {"tournament": "WC 01", "tournament_number": 1, "date": "2025-01-10",
+             "placement": 3, "wins": 2, "losses": 2, "won_tournament": False,
+             "winner": "Beta", "winner_id": "beta"},
+            {"tournament": "WC 02", "tournament_number": 2, "date": "2025-06-15",
+             "placement": 1, "wins": 5, "losses": 1, "won_tournament": True,
+             "winner": "Alpha", "winner_id": "alpha"},
+        ]
+
+        table = tournament_history_table(history, format_ordinal)
+
+        self.assertEqual(table["headers"], ["Tournament", "Placement", "Record", "Champion"])
+        self.assertEqual(
+            table["rows"],
+            [["🏆 WC 02", "Champion", "5–1", "Alpha"], ["WC 01", "3rd", "2–2", "Beta"]],
+        )
+        self.assertEqual(table["row_highlights"], {0: "champion"})
+        self.assertIn("/tournaments?tournament=2", table["cell_html"][(0, 0)])
+        self.assertIn("15 Jun 2025", table["cell_html"][(0, 0)])
+        self.assertIn("/players?player_id=beta", table["cell_html"][(1, 3)])
+
+    def test_opponent_records_show_result_and_win_rate_bar(self) -> None:
+        table = opponent_records_table([
+            {"opponent": "Beta", "opponent_id": "beta", "wins": 6, "losses": 8,
+             "matches": 14, "winrate": 42.857},
+            {"opponent": "<Gamma>", "opponent_id": "gamma", "wins": 3, "losses": 3,
+             "matches": 6, "winrate": 50.0},
+        ])
+
+        self.assertEqual(table["headers"], ["Opponent", "Record", "Sets", "Win Rate"])
+        self.assertEqual(table["rows"][0], ["Beta", "6–8", "14", "42.9%"])
+        self.assertIn("Losing record", table["cell_html"][(0, 0)])
+        self.assertIn("control-table-negative", table["cell_html"][(0, 0)])
+        self.assertIn("width:42.9%", table["cell_html"][(0, 3)])
+        self.assertIn("Even record", table["cell_html"][(1, 0)])
+        self.assertIn("&lt;Gamma&gt;", table["cell_html"][(1, 0)])
 
 
 class TournamentControlCenterTests(unittest.TestCase):
