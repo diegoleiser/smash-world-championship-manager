@@ -37,6 +37,111 @@ def _player_selector_styles() -> str:
     return selector_card_styles("player_profile_selector", "1.4rem")
 
 
+def _summary_pair_html(
+    class_prefix: str,
+    highlighted: tuple[str, str, str],
+    secondary: tuple[str, str, str],
+) -> str:
+    """Return two summary cards (label, description, value markup).
+
+    The first card is highlighted. Values are inserted as markup, so callers
+    escape plain text themselves.
+    """
+
+    prefix = class_prefix
+
+    def card_html(
+        card: tuple[str, str, str],
+        extra_class: str = "",
+    ) -> str:
+        label, description, value_html = card
+        return (
+            f"<div class='{prefix}-card{extra_class}'>"
+            "<div>"
+            f"<div class='{prefix}-label'>"
+            f"{label}"
+            "</div>"
+            f"<div class='{prefix}-detail'>"
+            f"{description}"
+            "</div>"
+            "</div>"
+            f"<div class='{prefix}-value'>"
+            f"{value_html}"
+            "</div>"
+            "</div>"
+        )
+
+    return (
+        "<style>"
+
+        f".{prefix}-grid {{"
+        "display:grid;"
+        "grid-template-columns:repeat(2, minmax(0, 1fr));"
+        "gap:1rem;"
+        "margin:0.5rem 0 1.25rem 0;"
+        "}"
+
+        f".{prefix}-card {{"
+        "display:flex;"
+        "align-items:center;"
+        "justify-content:space-between;"
+        "gap:1rem;"
+        "min-height:5rem;"
+        "padding:1rem 1.15rem;"
+        "border:1px solid rgba(128,128,128,0.28);"
+        "border-radius:0.8rem;"
+        "background:rgba(128,128,128,0.035);"
+        "}"
+
+        f".{prefix}-label {{"
+        "font-size:0.76rem;"
+        "font-weight:750;"
+        "letter-spacing:0.04em;"
+        "color:var(--swc-text-580);"
+        "text-transform:uppercase;"
+        "}"
+
+        f".{prefix}-detail {{"
+        "font-size:0.82rem;"
+        "font-weight:650;"
+        "color:var(--swc-text-580);"
+        "margin-top:0.25rem;"
+        "}"
+
+        f".{prefix}-value {{"
+        "font-size:1.75rem;"
+        "font-weight:800;"
+        "line-height:1;"
+        "white-space:nowrap;"
+        "}"
+
+        f".{prefix}-highlight {{"
+        "border-color:rgba(242,201,76,0.28);"
+        "background:rgba(242,201,76,0.045);"
+        "}"
+
+        f".{prefix}-highlight "
+        f".{prefix}-value {{"
+        "color:var(--swc-gold);"
+        "}"
+
+        "@media (max-width:650px) {"
+
+        f".{prefix}-grid {{"
+        "grid-template-columns:1fr;"
+        "}"
+
+        "}"
+
+        "</style>"
+
+        f"<div class='{prefix}-grid'>"
+        + card_html(highlighted, f" {prefix}-highlight")
+        + card_html(secondary)
+        + "</div>"
+    )
+
+
 def _placement_distribution_data(
     history: list[dict[str, Any]],
     format_ordinal: Callable[[int], str],
@@ -1544,102 +1649,18 @@ def render_player_page(
                 height=500,
             )
 
-            peak_elo_summary_html = (
-                "<style>"
-
-                ".elo-summary-grid {"
-                "display:grid;"
-                "grid-template-columns:repeat(2, minmax(0, 1fr));"
-                "gap:1rem;"
-                "margin:0.5rem 0 1.25rem 0;"
-                "}"
-
-                ".elo-summary-card {"
-                "display:flex;"
-                "align-items:center;"
-                "justify-content:space-between;"
-                "gap:1rem;"
-                "min-height:5rem;"
-                "padding:1rem 1.15rem;"
-                "border:1px solid rgba(128,128,128,0.28);"
-                "border-radius:0.8rem;"
-                "background:rgba(128,128,128,0.035);"
-                "}"
-
-                ".elo-summary-label {"
-                "font-size:0.76rem;"
-                "font-weight:750;"
-                "letter-spacing:0.04em;"
-                "color:var(--swc-text-580);"
-                "text-transform:uppercase;"
-                "}"
-
-                ".elo-summary-detail {"
-                "font-size:0.82rem;"
-                "font-weight:650;"
-                "color:var(--swc-text-580);"
-                "margin-top:0.25rem;"
-                "}"
-
-                ".elo-summary-value {"
-                "font-size:1.75rem;"
-                "font-weight:800;"
-                "line-height:1;"
-                "white-space:nowrap;"
-                "}"
-
-                ".elo-summary-highlight {"
-                "border-color:rgba(242,201,76,0.28);"
-                "background:rgba(242,201,76,0.045);"
-                "}"
-
-                ".elo-summary-highlight "
-                ".elo-summary-value {"
-                "color:var(--swc-gold);"
-                "}"
-
-                "@media (max-width:650px) {"
-
-                ".elo-summary-grid {"
-                "grid-template-columns:1fr;"
-                "}"
-
-                "}"
-
-                "</style>"
-
-                "<div class='elo-summary-grid'>"
-
-                "<div class='elo-summary-card "
-                "elo-summary-highlight'>"
-                "<div>"
-                "<div class='elo-summary-label'>"
-                "TOURNAMENT-END PEAK"
-                "</div>"
-                "<div class='elo-summary-detail'>"
-                "Highest rating at tournament end"
-                "</div>"
-                "</div>"
-                "<div class='elo-summary-value'>"
-                f"{peak_elo_value:.1f}"
-                "</div>"
-                "</div>"
-
-                "<div class='elo-summary-card'>"
-                "<div>"
-                "<div class='elo-summary-label'>"
-                "PEAK REACHED AT"
-                "</div>"
-                "<div class='elo-summary-detail'>"
-                "First tournament ending at this rating"
-                "</div>"
-                "</div>"
-                "<div class='elo-summary-value'>"
-                f"{html.escape(str(peak_row['tournament']))}"
-                "</div>"
-                "</div>"
-
-                "</div>"
+            peak_elo_summary_html = _summary_pair_html(
+                "elo-summary",
+                (
+                    "TOURNAMENT-END PEAK",
+                    "Highest rating at tournament end",
+                    f"{peak_elo_value:.1f}",
+                ),
+                (
+                    "PEAK REACHED AT",
+                    "First tournament ending at this rating",
+                    html.escape(str(peak_row["tournament"])),
+                ),
             )
 
             st.markdown(
@@ -1998,102 +2019,18 @@ def render_player_page(
                 height=500,
             )
 
-            best_rank_summary_html = (
-                "<style>"
-
-                ".rank-summary-grid {"
-                "display:grid;"
-                "grid-template-columns:repeat(2, minmax(0, 1fr));"
-                "gap:1rem;"
-                "margin:0.5rem 0 1.25rem 0;"
-                "}"
-
-                ".rank-summary-card {"
-                "display:flex;"
-                "align-items:center;"
-                "justify-content:space-between;"
-                "gap:1rem;"
-                "min-height:5rem;"
-                "padding:1rem 1.15rem;"
-                "border:1px solid rgba(128,128,128,0.28);"
-                "border-radius:0.8rem;"
-                "background:rgba(128,128,128,0.035);"
-                "}"
-
-                ".rank-summary-label {"
-                "font-size:0.76rem;"
-                "font-weight:750;"
-                "letter-spacing:0.04em;"
-                "color:var(--swc-text-580);"
-                "text-transform:uppercase;"
-                "}"
-
-                ".rank-summary-detail {"
-                "font-size:0.82rem;"
-                "font-weight:650;"
-                "color:var(--swc-text-580);"
-                "margin-top:0.25rem;"
-                "}"
-
-                ".rank-summary-value {"
-                "font-size:1.75rem;"
-                "font-weight:800;"
-                "line-height:1;"
-                "white-space:nowrap;"
-                "}"
-
-                ".rank-summary-highlight {"
-                "border-color:rgba(242,201,76,0.28);"
-                "background:rgba(242,201,76,0.045);"
-                "}"
-
-                ".rank-summary-highlight "
-                ".rank-summary-value {"
-                "color:var(--swc-gold);"
-                "}"
-
-                "@media (max-width:650px) {"
-
-                ".rank-summary-grid {"
-                "grid-template-columns:1fr;"
-                "}"
-
-                "}"
-
-                "</style>"
-
-                "<div class='rank-summary-grid'>"
-
-                "<div class='rank-summary-card "
-                "rank-summary-highlight'>"
-                "<div>"
-                "<div class='rank-summary-label'>"
-                "BEST CAREER RANK"
-                "</div>"
-                "<div class='rank-summary-detail'>"
-                "Highest historical position"
-                "</div>"
-                "</div>"
-                "<div class='rank-summary-value'>"
-                f"#{best_rank_value}"
-                "</div>"
-                "</div>"
-
-                "<div class='rank-summary-card'>"
-                "<div>"
-                "<div class='rank-summary-label'>"
-                "FIRST REACHED AT"
-                "</div>"
-                "<div class='rank-summary-detail'>"
-                "First tournament at this rank"
-                "</div>"
-                "</div>"
-                "<div class='rank-summary-value'>"
-                f"{best_rank_tournament_html}"
-                "</div>"
-                "</div>"
-
-                "</div>"
+            best_rank_summary_html = _summary_pair_html(
+                "rank-summary",
+                (
+                    "BEST CAREER RANK",
+                    "Highest historical position",
+                    f"#{best_rank_value}",
+                ),
+                (
+                    "FIRST REACHED AT",
+                    "First tournament at this rank",
+                    best_rank_tournament_html,
+                ),
             )
 
             st.markdown(

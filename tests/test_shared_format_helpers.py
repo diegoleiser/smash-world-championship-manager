@@ -3,6 +3,7 @@
 import unittest
 
 from bracket_visualization import match_status_label
+from dashboard_pages.player import _summary_pair_html
 from dashboard_pages.ui_components import selector_card_styles, versus_header_html
 from text_format import format_ordinal
 
@@ -69,6 +70,32 @@ class SelectorCardStylesTests(unittest.TestCase):
         self.assertIn("font-size: 1.4rem !important;", player)
         for leftover in ("{{", "}}", "{container_key}", "{value_font_size}"):
             self.assertNotIn(leftover, player)
+
+
+class SummaryPairTests(unittest.TestCase):
+    def test_first_card_is_highlighted_and_values_are_markup(self):
+        markup = _summary_pair_html(
+            "rank-summary",
+            ("BEST CAREER RANK", "Highest historical position", "#2"),
+            ("FIRST REACHED AT", "First tournament at this rank", "<a href='/x'>WC 03</a>"),
+        )
+
+        body = markup.split("</style>")[1]
+        self.assertEqual(
+            body,
+            "<div class='rank-summary-grid'>"
+            "<div class='rank-summary-card rank-summary-highlight'><div>"
+            "<div class='rank-summary-label'>BEST CAREER RANK</div>"
+            "<div class='rank-summary-detail'>Highest historical position</div>"
+            "</div><div class='rank-summary-value'>#2</div></div>"
+            "<div class='rank-summary-card'><div>"
+            "<div class='rank-summary-label'>FIRST REACHED AT</div>"
+            "<div class='rank-summary-detail'>First tournament at this rank</div>"
+            "</div><div class='rank-summary-value'><a href='/x'>WC 03</a></div></div>"
+            "</div>",
+        )
+        self.assertIn(".rank-summary-highlight .rank-summary-value {color:var(--swc-gold);}", markup)
+        self.assertIn("@media (max-width:650px) {.rank-summary-grid {grid-template-columns:1fr;}}", markup)
 
 
 if __name__ == "__main__":
