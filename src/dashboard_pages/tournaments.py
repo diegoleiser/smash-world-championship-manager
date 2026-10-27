@@ -11,6 +11,7 @@ import streamlit as st
 
 import bracket_visualization
 import narratives
+from dashboard_pages.achievements import render_tournament_unlocks
 from dashboard_pages.navigation_routes import player_profile_url
 from dashboard_pages.ui_components import (
     dashboard_table_html,
@@ -605,6 +606,7 @@ def render_tournaments(
     load_tournament_story_context: Callable[..., dict[str, Any]],
     tournament_elo_changes: Callable[..., list[dict[str, Any]]],
     load_upsets: Callable[[], list[dict[str, Any]]],
+    load_achievements: Callable[[], list[dict[str, Any]]],
     format_ordinal: Callable[[int], str],
     show_archived_match_dialog: Callable[..., None],
 ) -> None:
@@ -760,6 +762,12 @@ def render_tournaments(
             ),
             unsafe_allow_html=True,
         )
+
+    render_tournament_unlocks(
+        load_achievements(),
+        selected_tournament_number,
+        [str(participant["player_id"]) for participant in participants],
+    )
 
     tab_labels = []
     if group_tables:

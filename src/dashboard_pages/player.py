@@ -10,6 +10,7 @@ import pandas as pd
 import streamlit as st
 
 import narratives
+from dashboard_pages.achievements import render_player_badges
 from dashboard_pages.navigation_routes import (
     player_profile_url,
     tournament_archive_url,
@@ -456,6 +457,7 @@ def render_player_page(
     load_player_insights: Callable[..., dict[str, Any]],
     load_elo_ranking: Callable[..., list[dict[str, Any]]],
     load_upsets: Callable[[], list[dict[str, Any]]],
+    load_achievements: Callable[[], list[dict[str, Any]]],
     format_ordinal: Callable[[int], str],
 ) -> None:
     st.title("👤 Player profile")
@@ -1318,6 +1320,8 @@ def render_player_page(
         player_insights_html,
         unsafe_allow_html=True,
     )
+
+    render_player_badges(load_achievements(), player_id)
 
     st.markdown(
         """
