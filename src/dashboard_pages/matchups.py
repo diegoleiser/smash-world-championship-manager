@@ -1002,8 +1002,7 @@ def render_matchups(
                     columns="1fr 1fr 1.5fr 1.2fr 0.7fr",
                     emphasis_column=3,
                     cell_links=match_links,
-                    mobile_cards=True,
-                    mobile_card_variant="match-history",
+                    mobile_roles=["title", "aside", "wide", "stat", "stat"],
                 ),
                 unsafe_allow_html=True,
             )

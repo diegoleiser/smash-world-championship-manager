@@ -167,6 +167,7 @@ def upset_table(
         "rows": rows,
         "cell_html": markup,
         "columns": columns,
+        "mobile_roles": ["title", "stat", "aside", "stat"],
     }
 
 

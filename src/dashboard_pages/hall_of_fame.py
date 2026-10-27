@@ -258,6 +258,7 @@ def recent_milestone_table(
         "rows": rows,
         "cell_html": markup,
         "columns": "minmax(6rem,0.35fr) minmax(0,2fr)",
+        "mobile_roles": ["title", "wide"],
     }
 
 
@@ -397,8 +398,7 @@ def render_hall_of_fame(
                         row_highlights=title_table["row_highlights"],
                         cell_links=title_table["cell_links"],
                         emphasis_column=1,
-                        mobile_cards=True,
-                        mobile_card_variant="titles",
+                        mobile_roles=["rank", "title", "aside"],
                     ),
                     unsafe_allow_html=True,
                 )
@@ -430,7 +430,7 @@ def render_hall_of_fame(
             milestone_table["rows"],
             columns=milestone_table["columns"],
             cell_html=milestone_table["cell_html"],
-            mobile_cards=True,
+            mobile_roles=milestone_table["mobile_roles"],
         ),
         unsafe_allow_html=True,
     )

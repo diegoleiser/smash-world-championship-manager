@@ -269,6 +269,7 @@ def tournament_history_table(
 
     return {
         "headers": ["Tournament", "Placement", "Record", "Champion"],
+        "mobile_roles": ["title", "aside", "stat", "stat"],
         "rows": rows,
         "cell_html": markup,
         "row_highlights": highlights,
@@ -321,6 +322,7 @@ def opponent_records_table(opponents: list[dict[str, Any]]) -> dict[str, Any]:
 
     return {
         "headers": ["Opponent", "Record", "Sets", "Win Rate"],
+        "mobile_roles": ["title", "aside", "stat", "stat"],
         "rows": rows,
         "cell_html": markup,
         "columns": (
@@ -2136,7 +2138,7 @@ def render_player_page(
                     cell_html=history_table["cell_html"],
                     row_highlights=history_table["row_highlights"],
                     emphasis_column=0,
-                    mobile_cards=True,
+                    mobile_roles=history_table["mobile_roles"],
                 ),
                 unsafe_allow_html=True,
             )
@@ -2174,7 +2176,7 @@ def render_player_page(
                     columns=opponent_table["columns"],
                     cell_html=opponent_table["cell_html"],
                     emphasis_column=0,
-                    mobile_cards=True,
+                    mobile_roles=opponent_table["mobile_roles"],
                 ),
                 unsafe_allow_html=True,
             )

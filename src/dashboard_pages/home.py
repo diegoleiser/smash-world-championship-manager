@@ -701,12 +701,14 @@ def render_home(
 
     # Without inactive players every row would read "Active".
     ranking_headers = ["Rank", "Player", "Elo", "Gap", "Sets"]
+    ranking_roles = ["rank", "title", "stat", "stat", "stat"]
     ranking_columns = (
         "minmax(5.5rem,0.65fr) minmax(10rem,1.8fr) "
         "minmax(6rem,0.8fr) minmax(5rem,0.7fr) minmax(5rem,0.65fr)"
     )
     if include_inactive:
         ranking_headers.append("Status")
+        ranking_roles.append("aside")
         ranking_columns += " minmax(6rem,0.75fr)"
 
     st.markdown(
@@ -717,10 +719,9 @@ def render_home(
             row_highlights=ranking_highlights,
             cell_links=ranking_links,
             emphasis_column=1,
-            mobile_cards=True,
+            mobile_roles=ranking_roles,
             mobile_visible_rows=5,
             mobile_summary="Show full ranking",
-            mobile_card_variant="ranking",
         ),
         unsafe_allow_html=True,
     )
@@ -1244,8 +1245,7 @@ def render_home(
                 ),
                 cell_links=tournament_links,
                 emphasis_column=0,
-                mobile_cards=True,
-                mobile_card_variant="tournament",
+                mobile_roles=["title", "aside", "stat", "stat"],
                 visible_rows=5,
                 more_summary=f"Show all {len(tournament_rows)} tournaments",
             ),
@@ -1276,8 +1276,7 @@ def _render_biggest_upsets(upsets: list[dict[str, Any]]) -> None:
             table["rows"],
             columns=table["columns"],
             cell_html=table["cell_html"],
-            mobile_cards=True,
-            mobile_card_variant="upsets",
+            mobile_roles=table["mobile_roles"],
             visible_rows=top_count,
             more_summary=f"Show all {len(upsets)} upsets",
         ),
