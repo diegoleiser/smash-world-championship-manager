@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import sqlite3
 import sys
+import tempfile
 import unittest
+from contextlib import closing
 from dataclasses import replace
 from pathlib import Path
 from unittest.mock import patch
@@ -14,8 +17,8 @@ SRC_DIR = PROJECT_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
+import tournament_manager as tournament  # noqa: E402
 from monte_carlo.config import load_model_config  # noqa: E402
-from monte_carlo.bracket_forecast import forecast_bracket_start  # noqa: E402
 from monte_carlo.day_performance import estimate_group_day  # noqa: E402
 from monte_carlo.group_simulation import SimulationPlayer  # noqa: E402
 from monte_carlo.live_group import (  # noqa: E402
@@ -28,7 +31,9 @@ from monte_carlo.live_group import (  # noqa: E402
 from monte_carlo.model import CombinedModel, PlayerParameters  # noqa: E402
 from monte_carlo.live_service import (  # noqa: E402
     LiveDraftGroupState,
+    forecast_live_draft_bracket,
     forecast_live_draft_group,
+    load_live_draft_group_states,
 )
 from tournament.group_stage_standings import (  # noqa: E402
     GROUP_MATCH_CANCELLED,
@@ -36,7 +41,6 @@ from tournament.group_stage_standings import (  # noqa: E402
     GROUP_MATCH_FORFEIT,
     GROUP_MATCH_PENDING,
 )
-from tournament.group_stage_pairings import generate_round_robin_pairings  # noqa: E402
 
 
 class LiveGroupForecastTests(unittest.TestCase):
@@ -440,60 +444,124 @@ class DayPosteriorTests(unittest.TestCase):
         self.assertEqual(estimate.completed_score_sets, 1)
 
 
-class BracketStartForecastTests(unittest.TestCase):
+class LiveDraftBracketForecastTests(unittest.TestCase):
+    """Forecast a generated bracket after a real single-group draft."""
+
     def setUp(self) -> None:
+        self.temporary_directory = tempfile.TemporaryDirectory()
+        self.db_path = Path(self.temporary_directory.name) / "draft.db"
+        with closing(sqlite3.connect(self.db_path)) as connection, connection:
+            for sql_path in (
+                SRC_DIR / "schema.sql",
+                *sorted((SRC_DIR / "migrations").glob("*.sql")),
+            ):
+                connection.executescript(sql_path.read_text())
         config = load_model_config(
             PROJECT_ROOT / "config" / "model_freeze_candidate_v0.2.json"
         )
-        self.players = [
-            SimulationPlayer(
-                player_id=f"p{seed}",
-                display_name=f"Player {seed}",
-                initial_seed=seed,
-                initial_elo=1000.0,
-            )
-            for seed in range(1, 8)
-        ]
         self.model = CombinedModel(
             config,
             {
-                player.player_id: PlayerParameters(
-                    player.player_id,
-                    player.display_name,
+                f"p{seed}": PlayerParameters(
+                    f"p{seed}",
+                    f"Player {seed}",
                     0.0,
                 )
-                for player in self.players
+                for seed in range(1, 8)
             },
             {},
         )
-        player_ids = [player.player_id for player in self.players]
-        self.matches = [
-            LiveGroupMatch(
-                first,
-                second,
-                GROUP_MATCH_COMPLETED,
-                first,
-                2,
-                0,
-            )
-            for round_pairings in generate_round_robin_pairings(player_ids)
-            for first, second in round_pairings
-        ]
 
-    def test_complete_group_activates_day_and_bracket_forecast(self) -> None:
-        forecast = forecast_bracket_start(
-            self.players,
-            self.matches,
+    def tearDown(self) -> None:
+        self.temporary_directory.cleanup()
+
+    def create_group_draft(
+        self,
+        participant_count: int,
+        *,
+        leave_pending: int = 0,
+    ) -> str:
+        with closing(sqlite3.connect(self.db_path)) as connection, connection:
+            connection.executemany(
+                """
+                INSERT OR IGNORE INTO players (player_id, display_name)
+                VALUES (?, ?)
+                """,
+                [
+                    (f"p{seed}", f"Player {seed}")
+                    for seed in range(1, participant_count + 1)
+                ],
+            )
+        draft_id = tournament.create_draft(
+            self.db_path,
+            tournament_number=99,
+            tournament_date="2026-10-10",
+            format_type=tournament.FORMAT_GROUP_STAGE,
+            bracket_entry_mode=tournament.ENTRY_SPLIT_BY_GROUP_SEED,
+        )
+        for seed in range(1, participant_count + 1):
+            tournament.add_participant(
+                self.db_path,
+                draft_id,
+                f"p{seed}",
+                manual_seed=seed,
+            )
+        tournament.create_draft_groups(self.db_path, draft_id, 1)
+        tournament.create_draft_group_matches(self.db_path, draft_id)
+        group_matches = tournament.get_draft_group_matches(
+            self.db_path,
+            draft_id,
+        )
+        for match in group_matches[leave_pending:]:
+            tournament.update_draft_group_match(
+                self.db_path,
+                str(match["group_match_id"]),
+                status=GROUP_MATCH_COMPLETED,
+                player_1_score=2,
+                player_2_score=0,
+            )
+        return draft_id
+
+    def test_complete_group_uses_group_day_for_bracket_forecast(
+        self,
+    ) -> None:
+        draft_id = self.create_group_draft(7)
+        tournament.generate_draft_bracket(self.db_path, draft_id)
+        forecast = forecast_live_draft_bracket(
+            self.db_path,
+            draft_id,
             self.model,
             100,
             77,
         )
+
         self.assertEqual(len(forecast.players), 7)
         self.assertEqual(
-            {match.match_code for match in forecast.opening_matches},
+            {match.match_code for match in forecast.ready_matches},
             {"W1M1", "W1M2", "L1M2"},
         )
-        self.assertEqual(forecast.day_posterior.completed_score_sets, 21)
+        group_state = load_live_draft_group_states(
+            self.db_path,
+            draft_id,
+        )[0]
+        day_posterior = estimate_group_day(
+            [player.player_id for player in group_state.players],
+            group_state.matches,
+            self.model,
+        )
+        self.assertEqual(day_posterior.completed_score_sets, 21)
+        self.assertTrue(any(day_posterior.values.values()))
+        for match in forecast.ready_matches:
+            self.assertAlmostEqual(
+                match.player_1_win_probability,
+                self.model.set_probability(
+                    match.player_1_id,
+                    match.player_2_id,
+                    best_of=3,
+                    day_a=day_posterior.values[match.player_1_id],
+                    day_b=day_posterior.values[match.player_2_id],
+                ),
+            )
         self.assertAlmostEqual(
             sum(player.title_probability for player in forecast.players),
             1.0,
@@ -512,38 +580,24 @@ class BracketStartForecastTests(unittest.TestCase):
             )
 
     def test_pending_group_blocks_bracket_forecast(self) -> None:
-        incomplete = [
-            replace(self.matches[0], status=GROUP_MATCH_PENDING, winner_id=None,
-                    player_1_score=None, player_2_score=None),
-            *self.matches[1:],
-        ]
-        with self.assertRaisesRegex(ValueError, "Complete"):
-            forecast_bracket_start(
-                self.players,
-                incomplete,
+        draft_id = self.create_group_draft(7, leave_pending=1)
+        with self.assertRaises(ValueError):
+            tournament.generate_draft_bracket(self.db_path, draft_id)
+        with self.assertRaisesRegex(ValueError, "Generate the Bracket"):
+            forecast_live_draft_bracket(
+                self.db_path,
+                draft_id,
                 self.model,
                 10,
                 1,
             )
 
-    def test_five_player_bracket_start_handles_byes(self) -> None:
-        players = self.players[:5]
-        player_ids = [player.player_id for player in players]
-        matches = [
-            LiveGroupMatch(
-                first,
-                second,
-                GROUP_MATCH_COMPLETED,
-                first,
-                2,
-                0,
-            )
-            for round_pairings in generate_round_robin_pairings(player_ids)
-            for first, second in round_pairings
-        ]
-        forecast = forecast_bracket_start(
-            players,
-            matches,
+    def test_five_player_bracket_forecast_handles_byes(self) -> None:
+        draft_id = self.create_group_draft(5)
+        tournament.generate_draft_bracket(self.db_path, draft_id)
+        forecast = forecast_live_draft_bracket(
+            self.db_path,
+            draft_id,
             self.model,
             20,
             42,
@@ -553,10 +607,24 @@ class BracketStartForecastTests(unittest.TestCase):
             sum(player.title_probability for player in forecast.players),
             1.0,
         )
-        self.assertEqual(
-            sum(player.starts_in == "winners" for player in forecast.players),
-            4,
-        )
+        with closing(sqlite3.connect(self.db_path)) as connection:
+            winners_entries = connection.execute(
+                """
+                SELECT COUNT(DISTINCT player_id)
+                FROM (
+                    SELECT player_1_id AS player_id
+                    FROM tournament_draft_bracket_matches
+                    WHERE draft_id = ? AND match_code LIKE 'W1M%'
+                    UNION
+                    SELECT player_2_id
+                    FROM tournament_draft_bracket_matches
+                    WHERE draft_id = ? AND match_code LIKE 'W1M%'
+                )
+                WHERE player_id IS NOT NULL
+                """,
+                (draft_id, draft_id),
+            ).fetchone()[0]
+        self.assertEqual(winners_entries, 4)
 
 
 if __name__ == "__main__":
