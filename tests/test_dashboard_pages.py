@@ -505,6 +505,17 @@ class TournamentControlCenterTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             internal_dashboard_link("Unsafe", "https://example.com")
 
+    def test_table_styles_have_balanced_braces(self) -> None:
+        # A stray closing brace makes browsers drop the rule after it.
+        depth = 0
+        for character in dashboard_table_styles():
+            if character == "{":
+                depth += 1
+            elif character == "}":
+                depth -= 1
+                self.assertGreaterEqual(depth, 0)
+        self.assertEqual(depth, 0)
+
     def test_mobile_roles_place_cells_through_css_variables(self) -> None:
         markup = dashboard_table_html(
             ["Rank", "Player", "Elo", "Status"],

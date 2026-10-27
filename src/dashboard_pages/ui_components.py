@@ -991,7 +991,6 @@ def dashboard_table_styles() -> str:
                 align-items: flex-end;
                 text-align: right;
             }
-            }
         }
         .control-table-more summary {
             display: flex;
