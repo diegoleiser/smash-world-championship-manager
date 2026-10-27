@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 import types
 import unittest
+from unittest import mock
 from pathlib import Path
 
 
@@ -96,79 +97,27 @@ class BracketVisibilityTests(unittest.TestCase):
 
         self.assertEqual(visible_codes, ["W1M2"])
 
-    def test_small_bracket_uses_compact_component_height(self) -> None:
-        matches = [
-            {
-                "match_code": "WF",
-                "bracket_side": "winners",
-                "round_number": 1,
-                "round_label": "Winners Final",
-                "match_number": 1,
-                "status": "pending",
-            },
-            {
-                "match_code": "L1M1",
-                "bracket_side": "losers",
-                "round_number": 1,
-                "round_label": "Losers Round 1",
-                "match_number": 1,
-                "status": "pending",
-            },
-            {
-                "match_code": "LF",
-                "bracket_side": "losers",
-                "round_number": 2,
-                "round_label": "Losers Final",
-                "match_number": 1,
-                "status": "waiting",
-            },
-            {
-                "match_code": "GF",
-                "bracket_side": "finals",
-                "round_number": 1,
-                "round_label": "Grand Final",
-                "match_number": 1,
-                "status": "waiting",
-            },
-        ]
+    def test_bracket_component_grows_with_its_content(self) -> None:
+        with mock.patch.object(
+            bracket_view, "_bracket_component"
+        ) as bracket_component:
+            bracket_component.return_value = None
+            bracket_view.render_bracket(
+                [], [], component_key="bracket_test"
+            )
 
-        height = bracket_view.get_recommended_bracket_height(
-            matches,
-            [],
+        self.assertEqual(
+            bracket_component.call_args.kwargs["height"], "content"
         )
 
-        self.assertEqual(height, 532)
+    def test_connectors_follow_the_carried_player(self) -> None:
+        script = bracket_view.BRACKET_JS
 
-    def test_large_bracket_keeps_maximum_component_height(self) -> None:
-        matches = [
-            {
-                "match_code": f"W1M{match_number}",
-                "bracket_side": "winners",
-                "round_number": 1,
-                "round_label": "Winners Round 1",
-                "match_number": match_number,
-                "status": "pending",
-            }
-            for match_number in range(1, 5)
-        ]
-        matches.extend(
-            {
-                "match_code": f"L1M{match_number}",
-                "bracket_side": "losers",
-                "round_number": 1,
-                "round_label": "Losers Round 1",
-                "match_number": match_number,
-                "status": "pending",
-            }
-            for match_number in range(1, 3)
-        )
-
-        height = bracket_view.get_recommended_bracket_height(
-            matches,
-            [],
-        )
-
-        self.assertEqual(height, 950)
+        # Lines start at the winner (or loser) row and end at the row that
+        # shows the same name, with the route's slot as fallback.
+        self.assertIn("'.match-player-winner'", script)
+        self.assertIn("rowName(fromRow)", script)
+        self.assertIn("rows[slot - 1]", script)
 
     def test_playable_and_completed_matches_remain_visible(self) -> None:
         matches = [
