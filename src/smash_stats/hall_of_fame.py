@@ -6,7 +6,11 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Iterable
 
-from smash_stats.database import DEFAULT_DB_PATH, connect_db
+from smash_stats.database import (
+    DEFAULT_DB_PATH,
+    KNOWN_PARTICIPANTS_SQL,
+    connect_db,
+)
 from smash_stats.elo_history import (
     calculate_elo_history,
     get_elo_ranking_timeline,
@@ -445,7 +449,7 @@ def get_hall_of_fame(
         participant_rows = connection.execute(
             """
             SELECT t.tournament_number, tp.player_id, tp.placement
-            FROM tournament_participants AS tp
+            FROM (""" + KNOWN_PARTICIPANTS_SQL + """) AS tp
             JOIN tournaments AS t
               ON t.tournament_id = tp.tournament_id
             """

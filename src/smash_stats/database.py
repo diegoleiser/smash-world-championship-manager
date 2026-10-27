@@ -11,6 +11,28 @@ from db.connection import open_sqlite_connection
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DB_PATH = PROJECT_ROOT / "data" / "smash_wm.db"
 
+# Every participation the archive knows: all participant rows, plus the
+# champion of a tournament whose participants were never recorded (for some
+# early tournaments only the winner is known). The champion counts as an
+# appearance with placement 1; nobody else is assumed. Use it as a subquery,
+# e.g. ``FROM (`` + KNOWN_PARTICIPANTS_SQL + ``) AS tp``. Columns:
+# tournament_id, player_id, placement, seed and ``recorded`` (1 for a
+# participant row, 0 for a champion known only from the tournament).
+KNOWN_PARTICIPANTS_SQL = """
+    SELECT tournament_id, player_id, placement, seed, 1 AS recorded
+    FROM tournament_participants
+    UNION ALL
+    SELECT t.tournament_id, t.winner_id, 1, NULL, 0
+    FROM tournaments AS t
+    WHERE t.winner_id IS NOT NULL
+      AND NOT EXISTS (
+          SELECT 1
+          FROM tournament_participants AS recorded
+          WHERE recorded.tournament_id = t.tournament_id
+            AND recorded.player_id = t.winner_id
+      )
+"""
+
 
 class PlayerNotFoundError(ValueError):
     """Raised when a player cannot be found."""

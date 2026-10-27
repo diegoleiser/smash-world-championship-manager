@@ -11,6 +11,7 @@ from typing import Any
 
 from smash_stats.database import (
     DEFAULT_DB_PATH,
+    KNOWN_PARTICIPANTS_SQL,
     PlayerNotFoundError,
     connect_db,
     resolve_player,

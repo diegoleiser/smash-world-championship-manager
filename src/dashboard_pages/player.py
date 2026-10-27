@@ -244,7 +244,11 @@ def tournament_history_table(
             f"🏆 {entry['tournament']}" if won_tournament else str(entry["tournament"])
         )
         formatted_date = format_date(entry.get("date"))
-        record_text = f"{int(entry.get('wins') or 0)}–{int(entry.get('losses') or 0)}"
+        record_text = (
+            f"{int(entry.get('wins') or 0)}–{int(entry.get('losses') or 0)}"
+            if entry.get("match_data_available", True)
+            else "–"
+        )
         winner = str(entry.get("winner") or "Unknown")
 
         rows.append([tournament_label, placement_text, record_text, winner])

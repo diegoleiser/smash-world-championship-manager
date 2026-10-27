@@ -6,6 +6,8 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
+from smash_stats.database import KNOWN_PARTICIPANTS_SQL
+
 
 APPEARANCE_MILESTONES = {5, 10}
 WIN_MILESTONES = {25, 50, 100}
@@ -95,7 +97,7 @@ def _detect_appearance_milestones(
           ON p.player_id = current_tp.player_id
         JOIN tournaments AS current_tournament
           ON current_tournament.tournament_id = current_tp.tournament_id
-        JOIN tournament_participants AS previous_tp
+        JOIN (""" + KNOWN_PARTICIPANTS_SQL + """) AS previous_tp
           ON previous_tp.player_id = current_tp.player_id
         JOIN tournaments AS previous_tournament
           ON previous_tournament.tournament_id = previous_tp.tournament_id
@@ -216,7 +218,7 @@ def _detect_placement_milestones(
         FROM tournament_participants AS current_tp
         JOIN players AS p
           ON p.player_id = current_tp.player_id
-        LEFT JOIN tournament_participants AS previous_tp
+        LEFT JOIN (""" + KNOWN_PARTICIPANTS_SQL + """) AS previous_tp
           ON previous_tp.player_id = current_tp.player_id
         LEFT JOIN tournaments AS previous_tournament
           ON previous_tournament.tournament_id
