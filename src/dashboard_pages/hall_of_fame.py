@@ -196,6 +196,40 @@ def record_cards_html(records: list[dict[str, Any]]) -> str:
     )
 
 
+TITLE_RANK_ICONS = {1: "🥇", 2: "🥈", 3: "🥉"}
+
+
+def title_leaders_table(record: dict[str, Any]) -> dict[str, Any] | None:
+    """Return dashboard_table_html data ranking every title holder."""
+
+    if not record["entries"]:
+        return None
+    rows = []
+    links: dict[tuple[int, int], str] = {}
+    highlights: dict[int, str] = {}
+    for row_index, entry in enumerate(record["entries"]):
+        rank = int(entry["rank"])
+        player = entry["players"][0]
+        titles = int(entry["value"])
+        rows.append(
+            [
+                f"{TITLE_RANK_ICONS.get(rank, '')} #{rank}".strip(),
+                str(player["player"]),
+                f"{titles} {'Title' if titles == 1 else 'Titles'}",
+            ]
+        )
+        links[(row_index, 1)] = player_profile_url(str(player["player_id"]))
+        if rank == 1:
+            highlights[row_index] = "winners"
+    return {
+        "headers": ["Rank", "Player", "Titles"],
+        "rows": rows,
+        "cell_links": links,
+        "row_highlights": highlights,
+        "columns": "minmax(5.5rem,0.55fr) minmax(10rem,2fr) minmax(7rem,1fr)",
+    }
+
+
 def recent_milestone_table(
     tournaments: list[tuple[int, str]],
     milestones_by_tournament: dict[int, list[str]],
@@ -234,6 +268,7 @@ def hall_of_fame_styles() -> str:
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr));
             gap: 0.9rem;
+            margin-top: 0.9rem;
             margin-bottom: 1rem;
         }
         .hof-card {
@@ -345,7 +380,30 @@ def render_hall_of_fame(
         if not group_records:
             continue
         st.subheader(group_title)
-        st.markdown(record_cards_html(group_records), unsafe_allow_html=True)
+        title_record = next(
+            (record for record in group_records if record["key"] == "most_titles"),
+            None,
+        )
+        if title_record is not None:
+            group_records.remove(title_record)
+            title_table = title_leaders_table(title_record)
+            if title_table is not None:
+                st.markdown("#### Title Leaders")
+                st.markdown(
+                    dashboard_table_html(
+                        title_table["headers"],
+                        title_table["rows"],
+                        columns=title_table["columns"],
+                        row_highlights=title_table["row_highlights"],
+                        cell_links=title_table["cell_links"],
+                        emphasis_column=1,
+                        mobile_cards=True,
+                        mobile_card_variant="titles",
+                    ),
+                    unsafe_allow_html=True,
+                )
+        if group_records:
+            st.markdown(record_cards_html(group_records), unsafe_allow_html=True)
 
     st.subheader("Recent Milestones")
     recent = sorted(

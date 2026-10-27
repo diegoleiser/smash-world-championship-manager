@@ -911,6 +911,7 @@ def render_tournaments(
                         f"archive_bracket_"
                         f"{selected_tournament_number}"
                     ),
+                    hide_played_status=True,
                 )
             )
 
@@ -1000,7 +1001,7 @@ def render_tournaments(
                 "<style>"
                 ".archive-elo-summary {"
                 "display:grid;"
-                "grid-template-columns:repeat(3,minmax(0,1fr));"
+                "grid-template-columns:repeat(2,minmax(0,1fr));"
                 "overflow:hidden;"
                 "margin-bottom:1rem;"
                 "border:1px solid rgba(128,128,128,0.28);"
@@ -1068,11 +1069,6 @@ def render_tournaments(
                 "</div>"
                 "<div class='archive-elo-summary-change archive-elo-negative'>"
                 f"{format_elo_change(biggest_loss['Elo Change'])}"
-                "</div></div>"
-                "<div class='archive-elo-summary-item'>"
-                "<div class='archive-elo-summary-label'>Elo Changes</div>"
-                "<div class='archive-elo-summary-value'>"
-                f"{len(changes)} Players"
                 "</div></div></div>"
             )
             st.markdown(elo_summary_html, unsafe_allow_html=True)

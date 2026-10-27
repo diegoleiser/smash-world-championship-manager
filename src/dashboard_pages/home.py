@@ -690,8 +690,8 @@ def render_home(
                 format_elo(elo),
                 "Leader" if rank == 1 else format_elo_change(-elo_gap),
                 str(int(entry["rated_matches"])),
-                "Active" if entry["active"] else "Inactive",
             ]
+            + (["Active" if entry["active"] else "Inactive"] if include_inactive else [])
         )
         ranking_links[(row_index, 1)] = player_profile_url(
             str(entry["player_id"])
@@ -699,15 +699,21 @@ def render_home(
         if rank == 1:
             ranking_highlights[row_index] = "winners"
 
+    # Without inactive players every row would read "Active".
+    ranking_headers = ["Rank", "Player", "Elo", "Gap", "Sets"]
+    ranking_columns = (
+        "minmax(5.5rem,0.65fr) minmax(10rem,1.8fr) "
+        "minmax(6rem,0.8fr) minmax(5rem,0.7fr) minmax(5rem,0.65fr)"
+    )
+    if include_inactive:
+        ranking_headers.append("Status")
+        ranking_columns += " minmax(6rem,0.75fr)"
+
     st.markdown(
         dashboard_table_html(
-            ["Rank", "Player", "Elo", "Gap", "Sets", "Status"],
+            ranking_headers,
             ranking_rows,
-            columns=(
-                "minmax(5.5rem,0.65fr) minmax(10rem,1.8fr) "
-                "minmax(6rem,0.8fr) minmax(5rem,0.7fr) "
-                "minmax(5rem,0.65fr) minmax(6rem,0.75fr)"
-            ),
+            columns=ranking_columns,
             row_highlights=ranking_highlights,
             cell_links=ranking_links,
             emphasis_column=1,
@@ -1239,69 +1245,9 @@ def render_home(
                 cell_links=tournament_links,
                 emphasis_column=0,
                 mobile_cards=True,
-                mobile_visible_rows=5,
-                mobile_summary="Show all tournaments",
                 mobile_card_variant="tournament",
-            ),
-            unsafe_allow_html=True,
-        )
-        st.subheader("Title Leaders")
-
-        title_counts = (
-            tournament_df["Champion"]
-            .value_counts()
-            .rename_axis("Player")
-            .reset_index(name="Titles")
-        )
-
-        title_counts["Rank"] = (
-            title_counts["Titles"]
-            .rank(
-                method="min",
-                ascending=False,
-            )
-            .astype(int)
-        )
-
-        title_icons = {1: "🥇", 2: "🥈", 3: "🥉"}
-        winner_id_by_name = {
-            str(row["Champion"]): str(row["Winner ID"])
-            for _, row in tournament_df.iterrows()
-            if pd.notna(row["Winner ID"])
-        }
-        title_rows = []
-        title_links = {}
-        title_highlights = {}
-        for row_index, row in title_counts.iterrows():
-            rank = int(row["Rank"])
-            player = str(row["Player"])
-            titles = int(row["Titles"])
-            title_label = "Title" if titles == 1 else "Titles"
-            rank_text = f"{title_icons.get(rank, '')} #{rank}".strip()
-            title_rows.append(
-                [rank_text, player, f"{titles} {title_label}"]
-            )
-            player_id = winner_id_by_name.get(player)
-            if player_id is not None:
-                title_links[(row_index, 1)] = player_profile_url(player_id)
-            if rank == 1:
-                title_highlights[row_index] = "winners"
-
-        st.markdown(
-            dashboard_table_html(
-                ["Rank", "Player", "Titles"],
-                title_rows,
-                columns=(
-                    "minmax(5.5rem,0.55fr) minmax(10rem,2fr) "
-                    "minmax(7rem,1fr)"
-                ),
-                row_highlights=title_highlights,
-                cell_links=title_links,
-                emphasis_column=1,
-                mobile_cards=True,
-                mobile_visible_rows=5,
-                mobile_summary="Show all title leaders",
-                mobile_card_variant="titles",
+                visible_rows=5,
+                more_summary=f"Show all {len(tournament_rows)} tournaments",
             ),
             unsafe_allow_html=True,
         )

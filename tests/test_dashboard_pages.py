@@ -30,6 +30,7 @@ from dashboard_pages.player import (  # noqa: E402
 )
 from text_format import format_ordinal  # noqa: E402
 from dashboard_pages.tournament_manager import draft_header_metrics  # noqa: E402
+from dashboard_pages.hall_of_fame import title_leaders_table  # noqa: E402
 from dashboard_pages.tournament_control_center import (  # noqa: E402
     finalization_standings_table_data,
     group_ready_matches,
@@ -738,6 +739,26 @@ class TournamentControlCenterTests(unittest.TestCase):
             [match["group_match_id"] for match in ready],
             ["pending"],
         )
+
+
+class TitleLeadersTableTests(unittest.TestCase):
+    def test_title_leaders_rank_all_holders_with_medals(self) -> None:
+        table = title_leaders_table({
+            "key": "most_titles",
+            "entries": [
+                {"rank": 1, "players": [{"player_id": "a", "player": "Alpha"}], "value": 5},
+                {"rank": 2, "players": [{"player_id": "b", "player": "Beta"}], "value": 1},
+                {"rank": 2, "players": [{"player_id": "c", "player": "Gamma"}], "value": 1},
+            ],
+        })
+
+        self.assertEqual(
+            table["rows"],
+            [["🥇 #1", "Alpha", "5 Titles"], ["🥈 #2", "Beta", "1 Title"], ["🥈 #2", "Gamma", "1 Title"]],
+        )
+        self.assertEqual(table["row_highlights"], {0: "winners"})
+        self.assertEqual(table["cell_links"][(2, 1)], "/players?player_id=c")
+        self.assertIsNone(title_leaders_table({"key": "most_titles", "entries": []}))
 
 
 class TournamentManagerPageTests(unittest.TestCase):

@@ -861,8 +861,13 @@ def _render_match_card(
     match: dict[str, Any],
     *,
     selected_match_code: str | None,
+    hide_played_status: bool = False,
 ) -> str:
-    """Render one bracket match card."""
+    """Render one bracket match card.
+
+    ``hide_played_status`` drops the "Played" badge, which carries no
+    information in an archive where every regular Set was played.
+    """
 
     player_1_name = _format_player_name(
         match.get("player_1_name")
@@ -930,6 +935,15 @@ def _render_match_card(
     safe_status = html.escape(
         match_status_label(status)
     )
+    status_html = (
+        ""
+        if hide_played_status and status == "completed"
+        else (
+            f'<span class="match-status match-status-{html.escape(status)}">'
+            f"{safe_status}"
+            "</span>"
+        )
+    )
 
     return (
         f'<div class="match-card-link" '
@@ -939,9 +953,7 @@ def _render_match_card(
         f'data-match-code="{safe_match_code}">'
         '<div class="match-header">'
         f'<span class="match-code">{safe_match_code}</span>'
-        f'<span class="match-status match-status-{html.escape(status)}">'
-        f"{safe_status}"
-        "</span>"
+        f"{status_html}"
         "</div>"
         + _render_player_row(
             player_name=player_1_name,
@@ -1185,6 +1197,7 @@ def _render_bracket_section(
     title: str,
     matches: list[dict[str, Any]],
     selected_match_code: str | None,
+    hide_played_status: bool = False,
 ) -> str:
     """Render one bracket side with vertically aligned rounds."""
 
@@ -1245,6 +1258,7 @@ def _render_bracket_section(
             match_card_html = _render_match_card(
                 match,
                 selected_match_code=selected_match_code,
+                hide_played_status=hide_played_status,
             )
 
             cards.append(
@@ -1282,6 +1296,7 @@ def build_bracket_html(
     routes: list[dict[str, Any]],
     *,
     selected_match_code: str | None,
+    hide_played_status: bool = False,
 ) -> str:
     """Build the complete bracket HTML document."""
 
@@ -1322,6 +1337,7 @@ def build_bracket_html(
             [],
         ),
         selected_match_code=selected_match_code,
+        hide_played_status=hide_played_status,
     )
 
     losers_html = _render_bracket_section(
@@ -1332,6 +1348,7 @@ def build_bracket_html(
             [],
         ),
         selected_match_code=selected_match_code,
+        hide_played_status=hide_played_status,
     )
 
     finals_html = _render_bracket_section(
@@ -1342,6 +1359,7 @@ def build_bracket_html(
             [],
         ),
         selected_match_code=selected_match_code,
+        hide_played_status=hide_played_status,
     )
 
     route_data = []
@@ -1485,6 +1503,7 @@ def render_bracket(
     selected_match_code: str | None = None,
     component_key: str,
     height: int | None = None,
+    hide_played_status: bool = False,
 ) -> str | None:
     """Render the bracket and return the clicked match code."""
 
@@ -1498,6 +1517,7 @@ def render_bracket(
         matches,
         routes,
         selected_match_code=selected_match_code,
+        hide_played_status=hide_played_status,
     )
 
     result = _bracket_component(

@@ -134,6 +134,21 @@ class BuildHallOfFameTests(unittest.TestCase):
         self.assertTrue(all(record["entries"] == [] for record in records))
         self.assertNotIn("longest_loss_streak", [record["key"] for record in records])
 
+    def test_most_titles_ranks_every_title_holder(self) -> None:
+        records = build(
+            tournaments=[
+                {"tournament_number": number, "winner_id": winner}
+                for number, winner in enumerate(
+                    ["alpha", "alpha", "beta", "gamma", "delta"], start=1
+                )
+            ],
+        )
+
+        self.assertEqual(
+            holders(records["most_titles"]),
+            [(1, ["alpha"], 2), (2, ["beta"], 1), (2, ["delta"], 1), (2, ["gamma"], 1)],
+        )
+
     def test_championships_use_winner_and_placements(self) -> None:
         records = build(
             tournaments=[

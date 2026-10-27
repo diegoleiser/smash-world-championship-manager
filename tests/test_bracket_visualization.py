@@ -343,5 +343,31 @@ class BracketVisibilityTests(unittest.TestCase):
         self.assertNotIn("L3M1", hidden_codes)
 
 
+
+class ArchivedMatchStatusTests(unittest.TestCase):
+    def card(self, status: str, **kwargs) -> str:
+        return bracket_view._render_match_card(
+            {
+                "match_code": "W1M1",
+                "status": status,
+                "player_1_name": "Alpha",
+                "player_2_name": "Beta",
+            },
+            selected_match_code=None,
+            **kwargs,
+        )
+
+    def test_archive_hides_only_the_played_badge(self) -> None:
+        self.assertIn("match-status-completed", self.card("completed"))
+        self.assertNotIn(
+            "match-status-completed",
+            self.card("completed", hide_played_status=True),
+        )
+        self.assertIn(
+            "match-status-forfeit",
+            self.card("forfeit", hide_played_status=True),
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
