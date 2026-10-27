@@ -27,7 +27,12 @@ from dashboard_pages.upset_format import (
     upset_table,
     upsets_with_top_first,
 )
-from text_format import format_date, format_elo, format_elo_change
+from text_format import (
+    format_date,
+    format_elo,
+    format_elo_change,
+    with_medal,
+)
 
 
 def render_home(
@@ -675,7 +680,6 @@ def render_home(
 
     leader_elo = float(ranking[0]["elo"])
 
-    rank_icons = {1: "🥇", 2: "🥈", 3: "🥉"}
     ranking_rows = []
     ranking_links = {}
     ranking_highlights = {}
@@ -685,7 +689,7 @@ def render_home(
         elo_gap = leader_elo - elo
         ranking_rows.append(
             [
-                f"{rank_icons.get(rank, '')} #{rank}".strip(),
+                with_medal(rank, f"#{rank}"),
                 str(entry["player"]),
                 format_elo(elo),
                 "Leader" if rank == 1 else format_elo_change(-elo_gap),

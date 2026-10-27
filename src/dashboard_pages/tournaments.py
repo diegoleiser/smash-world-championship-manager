@@ -24,7 +24,13 @@ from dashboard_pages.upset_format import (
     tournament_upsets,
     upset_table,
 )
-from text_format import format_date, format_elo, format_elo_change
+from text_format import (
+    MEDALS,
+    format_date,
+    format_elo,
+    format_elo_change,
+    with_medal,
+)
 from tournament.archived_bracket import (
     archived_match_round_label,
     build_archived_bracket_matches,
@@ -73,11 +79,12 @@ def _archived_tournament_header_html(
         podium_players[1].append((str(tournament["winner"]), None))
 
     podium_items = []
-    for placement, icon, label in (
-        (1, "🥇", "Champion"),
-        (2, "🥈", "Runner-up"),
-        (3, "🥉", "Third Place"),
+    for placement, label in (
+        (1, "Champion"),
+        (2, "Runner-up"),
+        (3, "Third Place"),
     ):
+        icon = MEDALS[placement]
         linked_names = []
         for player_name, player_id in podium_players[placement]:
             escaped_name = html.escape(player_name)
@@ -284,7 +291,6 @@ def _final_standings_table_data(
                 placement_counts.get(placement_number, 0) + 1
             )
 
-    placement_icons = {1: "🥇", 2: "🥈", 3: "🥉"}
     rows = []
     row_highlights = {}
     for row_index, participant in enumerate(participants):
@@ -298,8 +304,7 @@ def _final_standings_table_data(
             ordinal = format_ordinal(placement_number)
             if placement_counts.get(placement_number, 0) > 1:
                 ordinal = f"T-{ordinal}"
-            icon = placement_icons.get(placement_number, "")
-            placement_text = f"{icon} {ordinal}".strip()
+            placement_text = with_medal(placement_number, ordinal)
             if placement_number == 1:
                 row_highlights[row_index] = "winners"
 

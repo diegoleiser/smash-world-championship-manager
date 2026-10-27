@@ -12,7 +12,13 @@ from dashboard_pages.ui_components import (
 )
 from datetime import date, datetime
 
-from text_format import format_date, format_elo, format_elo_change, format_ordinal
+from text_format import (
+    format_date,
+    format_elo,
+    format_elo_change,
+    format_ordinal,
+    with_medal,
+)
 
 
 class OrdinalTests(unittest.TestCase):
@@ -25,6 +31,13 @@ class OrdinalTests(unittest.TestCase):
         for value, expected in cases.items():
             with self.subTest(value=value):
                 self.assertEqual(format_ordinal(value), expected)
+
+
+class MedalTests(unittest.TestCase):
+    def test_only_the_top_three_get_a_medal(self):
+        self.assertEqual(with_medal(1, "#1"), "🥇 #1")
+        self.assertEqual(with_medal(3, "T-3rd"), "🥉 T-3rd")
+        self.assertEqual(with_medal(4, "4th"), "4th")
 
 
 class DateFormatTests(unittest.TestCase):

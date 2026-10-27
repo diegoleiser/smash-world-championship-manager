@@ -10,8 +10,3 @@ def _percentage(numerator: int, denominator: int) -> float | None:
         return None
 
     return round(numerator / denominator * 100, 1)
-def _format_percent(value: float | None) -> str:
-    return "–" if value is None else f"{value:.1f} %"
-def _format_number(value: float | None) -> str:
-    return "–" if value is None else f"{value:.2f}"
-

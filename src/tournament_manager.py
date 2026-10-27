@@ -75,7 +75,6 @@ VALID_START_POSITIONS = {
 }
 
 BRACKET_START_ALL_WINNERS = "all_winners"
-BRACKET_START_SPLIT = "split_by_group_seed"
 
 
 from tournament.bracket_generation import (

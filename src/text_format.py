@@ -15,6 +15,15 @@ def format_ordinal(value: int) -> str:
     return f"{value}{suffix}"
 
 
+MEDALS = {1: "🥇", 2: "🥈", 3: "🥉"}
+
+
+def with_medal(position: int, text: str) -> str:
+    """Prefix the top three ranks or placements with their medal."""
+
+    return f"{MEDALS.get(position, '')} {text}".strip()
+
+
 ELO_MINUS = "−"
 
 

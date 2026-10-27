@@ -15,6 +15,8 @@ try:
 except ImportError:  # pragma: no cover
     requests = None
 
+from dotenv import load_dotenv
+
 from db.backup import backup_database
 from db.migrations import MIGRATE_COMMAND, detect_version, latest_version
 
@@ -28,17 +30,6 @@ API_BASE = "https://api.challonge.com/v1"
 def normalize_alias(value: str) -> str:
     value = unicodedata.normalize("NFKC", value)
     return " ".join(value.strip().casefold().split())
-
-
-def load_env_file(path: Path) -> None:
-    if not path.exists():
-        return
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
 
 @dataclass(frozen=True)
@@ -113,7 +104,7 @@ def fetch_json(tournament_ref: str, endpoint: str) -> Any:
     if requests is None:
         raise RuntimeError("The 'requests' package is missing: python -m pip install requests")
 
-    load_env_file(ROOT / ".env")
+    load_dotenv(ROOT / ".env")
     api_key = os.environ.get("CHALLONGE_API_KEY")
     if not api_key:
         raise RuntimeError("CHALLONGE_API_KEY is missing. See .env.example.")
