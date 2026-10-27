@@ -56,10 +56,12 @@ from dashboard_pages.ui_components import (  # noqa: E402
     dashboard_table_html,
     dashboard_table_styles,
     format_optional_percentage,
+    mobile_card_layout,
     mobile_control_center_card_styles,
     mobile_seeding_styles,
     up_next_matchup_html,
 )
+from dashboard_pages.upset_format import upset_table  # noqa: E402
 
 
 class MatchupsPageBoundaryTests(unittest.TestCase):
@@ -500,20 +502,58 @@ class TournamentControlCenterTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             internal_dashboard_link("Unsafe", "https://example.com")
 
-    def test_upset_table_has_a_compact_mobile_card_variant(self) -> None:
+    def test_mobile_roles_place_cells_through_css_variables(self) -> None:
         markup = dashboard_table_html(
-            ["Set", "Elo Gap"],
-            [["Alpha vs Beta", "+312.3"]],
-            columns="1fr 1fr",
-            mobile_cards=True,
-            mobile_card_variant="upsets",
+            ["Rank", "Player", "Elo", "Status"],
+            [["#1", "Alpha", "1100.0", "Active"]],
+            columns="repeat(4, 1fr)",
+            mobile_roles=["rank", "title", "stat", "aside"],
+        )
+        styles = dashboard_table_styles()
+
+        self.assertIn(
+            "control-table-mobile-cards control-table-mobile-roles",
+            markup,
+        )
+        self.assertIn(
+            "--card-columns:3.4rem repeat(1, minmax(0, 1fr)) auto;",
+            markup,
+        )
+        self.assertIn(
+            'control-table-card-rank control-table-card-lead" '
+            'style="--card-column:1 / 2;--card-row:1;"',
+            markup,
+        )
+        self.assertIn("control-table-card-aside control-table-card-end", markup)
+        self.assertIn("grid-column: var(--card-column)", styles)
+        self.assertIn("grid-template-columns: var(--card-columns)", styles)
+        # Card layouts no longer depend on column names.
+        self.assertNotIn(".control-table-cell[data-label=", styles)
+
+    def test_upset_table_names_a_role_for_every_column(self) -> None:
+        table = upset_table(
+            [
+                {
+                    "winner": "Alpha",
+                    "loser": "Beta",
+                    "winner_id": "alpha",
+                    "loser_id": "beta",
+                    "tournament_number": 3,
+                    "stage": "knockout",
+                    "round_label": "GF",
+                    "elo_gap": 180.0,
+                    "winner_elo_before": 1000.0,
+                    "loser_elo_before": 1180.0,
+                    "winner_score": 3,
+                    "loser_score": 1,
+                    "score_known": True,
+                    "walkover": False,
+                }
+            ]
         )
 
-        self.assertIn("control-table-mobile-cards control-table-mobile-upsets", markup)
-        self.assertIn(
-            '.control-table-mobile-upsets\n            .control-table-cell[data-label="Set"]',
-            dashboard_table_styles(),
-        )
+        self.assertEqual(len(table["mobile_roles"]), len(table["headers"]))
+        self.assertEqual(table["mobile_roles"][0], "title")
 
     def test_dashboard_table_markup_leaves_styles_to_the_page(self) -> None:
         markup = dashboard_table_html(["Player"], [["Alpha"]], columns="1fr")
@@ -581,10 +621,9 @@ class TournamentControlCenterTests(unittest.TestCase):
             [["Harper", "1234.5"], ["Finley", "1200.0"]],
             columns="2fr 1fr",
             emphasis_column=0,
-            mobile_cards=True,
             mobile_visible_rows=1,
             mobile_summary="Show full ranking",
-            mobile_card_variant="ranking",
+            mobile_roles=["title", "stat"],
         )
 
         self.assertIn("control-table-mobile-cards", markup)
@@ -595,7 +634,7 @@ class TournamentControlCenterTests(unittest.TestCase):
         self.assertIn("Show full ranking", markup)
         self.assertIn("Show less", markup)
         self.assertIn("control-table-mobile-more", markup)
-        self.assertIn("control-table-mobile-ranking", markup)
+        self.assertIn("control-table-mobile-roles", markup)
         self.assertIn("order: 2", dashboard_table_styles())
 
         with self.assertRaises(ValueError):
@@ -607,67 +646,30 @@ class TournamentControlCenterTests(unittest.TestCase):
                 mobile_visible_rows=0,
             )
 
-        with self.assertRaises(ValueError):
-            dashboard_table_html(
-                ["Player"],
-                [["Harper"]],
-                columns="1fr",
-                mobile_cards=True,
-                mobile_card_variant="unknown",
-            )
+        # An unknown role, a role count that differs from the headers, and a
+        # repeated single role are all rejected.
+        for headers, bad_roles in (
+            (["Player"], ["unknown"]),
+            (["Player"], ["title", "stat"]),
+            (["Player", "Elo"], ["title", "title"]),
+        ):
+            with self.subTest(roles=bad_roles), self.assertRaises(ValueError):
+                dashboard_table_html(
+                    headers,
+                    [["Harper"] * len(headers)],
+                    columns="1fr",
+                    mobile_roles=bad_roles,
+                )
 
-        tournament_markup = dashboard_table_html(
-            ["Tournament", "Date", "Champion", "Players"],
-            [["WC 13", "28 Feb 2026", "Harper", "7"]],
-            columns="repeat(4, 1fr)",
+        plain = dashboard_table_html(
+            ["Player"],
+            [["Harper"]],
+            columns="1fr",
             mobile_cards=True,
-            mobile_card_variant="tournament",
         )
-        titles_markup = dashboard_table_html(
-            ["Rank", "Player", "Titles"],
-            [["#1", "Finley", "5 Titles"]],
-            columns="repeat(3, 1fr)",
-            mobile_cards=True,
-            mobile_card_variant="titles",
-        )
-        self.assertIn("control-table-mobile-tournament", tournament_markup)
-        self.assertIn("control-table-mobile-titles", titles_markup)
-
-        history_markup = dashboard_table_html(
-            ["Tournament", "Date", "Round", "Winner", "Result"],
-            [["WC 13", "28 Feb 2026", "Group Round 3", "Drew", "1–2"]],
-            columns="repeat(5, 1fr)",
-            mobile_cards=True,
-            mobile_card_variant="match-history",
-        )
-        self.assertIn("control-table-mobile-match-history", history_markup)
-
-        standings_markup = dashboard_table_html(
-            ["Rank", "Player", "Set Record", "Game Record"],
-            [["#1", "Harper", "5–1", "11–2"]],
-            columns="repeat(4, 1fr)",
-            mobile_cards=True,
-            mobile_card_variant="standings",
-        )
-        match_markup = dashboard_table_html(
-            ["Round", "Set", "Result", "Winner"],
-            [["3", "Drew vs Harper", "1–2", "Harper"]],
-            columns="repeat(4, 1fr)",
-            mobile_cards=True,
-            mobile_card_variant="tournament-match",
-        )
-        self.assertIn("control-table-mobile-standings", standings_markup)
-        self.assertIn("control-table-mobile-tournament-match", match_markup)
-
-        for variant in ("final-standings", "elo-change", "elo-ranking"):
-            markup = dashboard_table_html(
-                ["Player"],
-                [["Harper"]],
-                columns="1fr",
-                mobile_cards=True,
-                mobile_card_variant=variant,
-            )
-            self.assertIn(f"control-table-mobile-{variant}", markup)
+        self.assertIn("control-table-mobile-cards", plain)
+        self.assertNotIn("control-table-mobile-roles", plain)
+        self.assertNotIn("--card-column", plain)
 
     def test_clickable_card_styles_use_shared_hover_language(self) -> None:
         styles = clickable_card_button_styles("example_card_")
@@ -827,20 +829,28 @@ class TournamentManagerPageTests(unittest.TestCase):
         self.assertIn("2.5rem minmax(0, 1fr) 2.4rem 2.4rem", styles)
         self.assertIn("width: 2.4rem", styles)
 
-    def test_group_ranking_has_a_dedicated_mobile_layout(self) -> None:
-        markup = dashboard_table_html(
-            [
-                "Seed", "Player", "Group", "Group Place",
-                "Set Win %", "Game Win %", "Bracket",
-            ],
-            [["1", "Alpha", "Group A", "1", "–", "–", "Winners"]],
-            columns="repeat(7, minmax(5rem, 1fr))",
-            mobile_cards=True,
-            mobile_card_variant="group-ranking",
+    def test_card_layout_wraps_stats_below_a_rank_beside_the_title(self) -> None:
+        layout = mobile_card_layout(
+            ["rank", "title", "stat", "stat", "stat", "stat", "aside"]
         )
+        placements = layout["placements"]
 
-        self.assertIn("control-table-mobile-group-ranking", markup)
-        self.assertIn('data-label="Bracket"', markup)
+        self.assertEqual(
+            layout["grid_columns"],
+            "3.4rem repeat(2, minmax(0, 1fr)) auto",
+        )
+        self.assertEqual(placements[0], {"column": "1 / 2", "row": "1", "end": False})
+        self.assertEqual(placements[1]["column"], "2 / 4")
+        self.assertEqual(placements[6], {"column": "4 / 5", "row": "1", "end": True})
+        self.assertEqual(
+            [(cell["column"], cell["row"], cell["end"]) for cell in placements[2:6]],
+            [
+                ("2 / 3", "2", False),
+                ("3 / 4", "2", False),
+                ("4 / 5", "2", True),
+                ("2 / 3", "3", False),
+            ],
+        )
 
     def test_compact_metric_strip_keeps_three_values_together(self) -> None:
         markup = compact_metric_strip_html([
@@ -880,36 +890,48 @@ class TournamentManagerPageTests(unittest.TestCase):
         self.assertIn("overflow: visible !important", styles)
         self.assertIn("margin-top: 1.25rem", styles)
 
-    def test_all_sets_has_a_dedicated_mobile_layout(self) -> None:
-        markup = dashboard_table_html(
-            ["Group", "Round", "Set", "Status", "Result"],
-            [["Group A", "1", "Alpha vs Beta", "Pending", "—"]],
-            columns="repeat(5, minmax(5rem, 1fr))",
-            mobile_cards=True,
-            mobile_card_variant="control-sets",
-        )
+    def test_card_layout_gives_wide_cells_their_own_row(self) -> None:
+        placements = mobile_card_layout(
+            ["title", "aside", "wide", "stat", "stat"]
+        )["placements"]
 
-        self.assertIn("control-table-mobile-control-sets", markup)
-        self.assertIn('data-label="Set"', markup)
+        self.assertEqual(placements[0], {"column": "1 / 2", "row": "1", "end": False})
+        self.assertEqual(placements[2], {"column": "1 / 3", "row": "2", "end": False})
+        self.assertEqual(placements[3]["row"], "3")
+        self.assertEqual(placements[4], {"column": "2 / 3", "row": "3", "end": True})
 
-    def test_remaining_manager_tables_have_mobile_card_layouts(self) -> None:
-        forecast = dashboard_table_html(
-            ["Player", "P(GF)", "P(Title)"],
-            [["Alpha", "70.0%", "40.0%"]],
-            columns="repeat(3, 1fr)",
-            mobile_cards=True,
-            mobile_card_variant="title-forecast",
-        )
-        participants = dashboard_table_html(
-            ["Player", "Initial Seed", "Starts In"],
-            [["Alpha", "1", "Winners"]],
-            columns="repeat(3, 1fr)",
-            mobile_cards=True,
-            mobile_card_variant="participants",
-        )
+    def test_card_layout_keeps_two_stats_in_the_title_row(self) -> None:
+        layout = mobile_card_layout(["rank", "title", "stat", "stat"])
 
-        self.assertIn("control-table-mobile-title-forecast", forecast)
-        self.assertIn("control-table-mobile-participants", participants)
+        self.assertEqual(
+            layout["grid_columns"], "3.4rem minmax(0, 1fr) auto auto"
+        )
+        self.assertEqual(
+            [(cell["column"], cell["row"], cell["end"]) for cell in layout["placements"]],
+            [
+                ("1 / 2", "1", False),
+                ("2 / 3", "1", False),
+                ("3 / 4", "1", True),
+                ("4 / 5", "1", True),
+            ],
+        )
+        # An aside or a set stat count keeps the stats on their own row.
+        for roles, stat_columns in (
+            (["title", "aside", "stat", "stat"], None),
+            (["title", "stat", "stat"], 2),
+        ):
+            with self.subTest(roles=roles):
+                placements = mobile_card_layout(
+                    roles, stat_columns=stat_columns
+                )["placements"]
+                self.assertEqual(placements[-1]["row"], "2")
+
+    def test_card_layout_rejects_unknown_or_repeated_roles(self) -> None:
+        for roles in (["title", "score"], ["rank", "rank"], ["aside", "aside"]):
+            with self.subTest(roles=roles), self.assertRaises(ValueError):
+                mobile_card_layout(roles)
+        with self.assertRaises(ValueError):
+            mobile_card_layout(["title", "stat"], stat_columns=5)
 
 
 class TournamentPageTests(unittest.TestCase):

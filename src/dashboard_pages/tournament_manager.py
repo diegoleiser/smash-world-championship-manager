@@ -123,8 +123,7 @@ def _render_live_group_forecast(
                 "minmax(7rem,0.9fr) minmax(7rem,0.9fr) minmax(7rem,1fr)"
             ),
             emphasis_column=0,
-            mobile_cards=True,
-            mobile_card_variant="forecast",
+            mobile_roles=["title", "stat", "stat", "stat", "aside"],
         ),
         unsafe_allow_html=True,
     )
@@ -168,7 +167,7 @@ def _render_live_group_forecast(
                         "minmax(11rem,1.7fr) repeat(3,minmax(7rem,1fr))"
                     ),
                     emphasis_column=0,
-                    mobile_cards=True,
+                    mobile_roles=["title", "stat", "stat", "stat"],
                 ),
                 unsafe_allow_html=True,
             )
@@ -261,8 +260,7 @@ def _render_live_bracket_forecast(
                 "minmax(6rem,0.8fr)"
             ),
             emphasis_column=0,
-            mobile_cards=True,
-            mobile_card_variant="title-forecast",
+            mobile_roles=["title", "stat", "stat"],
         ),
         unsafe_allow_html=True,
     )
@@ -665,7 +663,7 @@ def _render_group_control_center(
                 elif player_status == "Losers Locked":
                     row_highlights[row_index] = "losers"
                 row = [
-                    str(player["placement"]),
+                    f"#{player['placement']}",
                     str(player["player"]),
                     f"{player['sets_won']}–{player['sets_lost']}",
                     f"{player['games_won']}–{player['games_lost']}",
@@ -686,14 +684,17 @@ def _render_group_control_center(
             with column:
                 st.markdown(f"#### {group['group_name']}")
                 headers = ["Rank", "Player", "Set Record", "Game Record"]
+                roles = ["rank", "title", "stat", "stat"]
                 columns_css = (
                     "2.5rem minmax(7rem,1.5fr) "
                     "minmax(4rem,0.65fr) minmax(4rem,0.65fr) "
                 )
                 if show_win_probabilities:
                     headers.append("P(Winners)")
+                    roles.append("stat")
                     columns_css += "minmax(6rem,0.8fr) "
                 headers.append("Status")
+                roles.append("aside")
                 columns_css += "minmax(7rem,1fr)"
                 st.markdown(
                     dashboard_table_html(
@@ -702,8 +703,7 @@ def _render_group_control_center(
                         columns=columns_css,
                         row_highlights=row_highlights,
                         emphasis_column=1,
-                        mobile_cards=True,
-                        mobile_card_variant="control-standings",
+                        mobile_roles=roles,
                     ),
                     unsafe_allow_html=True,
                 )
@@ -745,8 +745,7 @@ def _render_group_control_center(
                     "minmax(5rem,0.65fr)"
                 ),
                 emphasis_column=2,
-                mobile_cards=True,
-                mobile_card_variant="control-sets",
+                mobile_roles=["stat", "stat", "title", "stat", "aside"],
             ),
             unsafe_allow_html=True,
         )
@@ -815,8 +814,7 @@ def _render_bracket_control_center(
                     ),
                     row_highlights=placement_highlights,
                     emphasis_column=1,
-                    mobile_cards=True,
-                    mobile_card_variant="finalization-standings",
+                    mobile_roles=["rank", "title", "stat", "stat", "stat"],
                 ),
                 unsafe_allow_html=True,
             )
@@ -1717,8 +1715,7 @@ def render_tournament_manager(
                         "minmax(7rem,0.8fr)"
                     ),
                     emphasis_column=0,
-                    mobile_cards=True,
-                    mobile_card_variant="participants",
+                    mobile_roles=["title", "stat", "stat"],
                 ),
                 unsafe_allow_html=True,
             )
@@ -2088,8 +2085,7 @@ def render_tournament_manager(
                                                 "minmax(9rem,1.5fr)"
                                             ),
                                             emphasis_column=2,
-                                            mobile_cards=True,
-                                            mobile_card_variant="group-assignment",
+                                            mobile_roles=["rank", "aside", "title"],
                                         ),
                                         unsafe_allow_html=True,
                                     )
@@ -2247,7 +2243,7 @@ def render_tournament_manager(
                                     )
 
                                     standing_rows.append([
-                                        str(player["placement"]),
+                                        f"#{player['placement']}",
                                         str(player["player"]),
                                         f"{player['sets_won']}–{player['sets_lost']}",
                                         format_optional_percentage(set_rate),
@@ -2273,8 +2269,7 @@ def render_tournament_manager(
                                             "repeat(2,minmax(7rem,0.9fr))"
                                         ),
                                         emphasis_column=1,
-                                        mobile_cards=True,
-                                        mobile_card_variant="standings",
+                                        mobile_roles=["rank", "title", "stat", "stat"],
                                     ),
                                     unsafe_allow_html=True,
                                 )
@@ -2346,10 +2341,10 @@ def render_tournament_manager(
                                 ]
 
                                 global_ranking_rows.append([
-                                    str(player["global_seed"]),
+                                    f"#{player['global_seed']}",
                                     str(player["player"]),
                                     str(player["group_name"]),
-                                    str(player["group_placement"]),
+                                    f"#{player['group_placement']}",
                                     format_optional_percentage(set_rate),
                                     format_optional_percentage(game_rate),
                                     (
@@ -2373,8 +2368,11 @@ def render_tournament_manager(
                                         "minmax(7rem,0.9fr)"
                                     ),
                                     emphasis_column=1,
-                                    mobile_cards=True,
-                                    mobile_card_variant="group-ranking",
+                                    mobile_roles=[
+                                        "rank", "title", "stat", "stat",
+                                        "stat", "stat", "aside",
+                                    ],
+                                    mobile_stat_columns=2,
                                 ),
                                 unsafe_allow_html=True,
                             )
@@ -2998,8 +2996,7 @@ def render_tournament_manager(
                             ),
                             row_highlights=placement_highlights,
                             emphasis_column=1,
-                            mobile_cards=True,
-                            mobile_card_variant="finalization-standings",
+                            mobile_roles=["rank", "title", "stat", "stat", "stat"],
                         ),
                         unsafe_allow_html=True,
                     )

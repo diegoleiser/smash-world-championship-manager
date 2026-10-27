@@ -755,8 +755,7 @@ def render_tournaments(
                 table["rows"],
                 columns=table["columns"],
                 cell_html=table["cell_html"],
-                mobile_cards=True,
-                mobile_card_variant="upsets",
+                mobile_roles=table["mobile_roles"],
                 mobile_visible_rows=3,
                 mobile_summary="Show all upsets",
             ),
@@ -808,8 +807,7 @@ def render_tournaments(
                         row_highlights=table["highlights"],
                         cell_links=table["links"],
                         emphasis_column=1,
-                        mobile_cards=True,
-                        mobile_card_variant="standings",
+                        mobile_roles=["rank", "title", "stat", "stat"],
                     ),
                     unsafe_allow_html=True,
                 )
@@ -835,8 +833,7 @@ def render_tournaments(
                         if match.get("winner_id") is not None
                     },
                     emphasis_column=1,
-                    mobile_cards=True,
-                    mobile_card_variant="tournament-match",
+                    mobile_roles=["stat", "title", "aside", "stat"],
                 ),
                 unsafe_allow_html=True,
             )
@@ -868,8 +865,7 @@ def render_tournaments(
                         for row_index, participant in enumerate(participants)
                     },
                     emphasis_column=1,
-                    mobile_cards=True,
-                    mobile_card_variant="final-standings",
+                    mobile_roles=["rank", "title", "stat", "stat"],
                 ),
                 unsafe_allow_html=True,
             )
@@ -998,8 +994,7 @@ def render_tournaments(
                         if match.get("winner_id") is not None
                     },
                     emphasis_column=1,
-                    mobile_cards=True,
-                    mobile_card_variant="tournament-match",
+                    mobile_roles=["stat", "title", "aside", "stat"],
                 ),
                 unsafe_allow_html=True,
             )
@@ -1150,8 +1145,7 @@ def render_tournaments(
                         for row_index, change in enumerate(changes)
                     },
                     emphasis_column=0,
-                    mobile_cards=True,
-                    mobile_card_variant="elo-change",
+                    mobile_roles=["title", "stat", "aside", "stat"],
                 ),
                 unsafe_allow_html=True,
             )
@@ -1184,8 +1178,7 @@ def render_tournaments(
                                 for row_index, row in enumerate(snapshot)
                             },
                             emphasis_column=1,
-                            mobile_cards=True,
-                            mobile_card_variant="elo-ranking",
+                            mobile_roles=["rank", "title", "stat", "stat"],
                         ),
                         unsafe_allow_html=True,
                     )
