@@ -10,12 +10,14 @@ from monte_carlo.scorelines import simulate_scoreline
 from tournament.bracket_constants import (
     BRACKET_SIDE_LOSERS,
     BRACKET_SIDE_WINNERS,
+    ENTRY_ALL_WINNERS,
     ENTRY_SPLIT_BY_GROUP_SEED,
 )
 from tournament.bracket_matches import build_bracket_plan
 from tournament.bracket_routes import build_bracket_route_plan
 from tournament.bracket_seeding import (
     get_bracket_size,
+    get_first_round_seed_pairs,
     get_split_bracket_seed_pairs,
 )
 
@@ -39,13 +41,19 @@ class BracketSimulationResult:
     grand_final_reset_played: bool
 
 
-def simulate_split_bracket(
+def simulate_bracket(
     seeded_player_ids: list[str],
     model: CombinedModel,
     day_values: dict[str, float],
     rng: random.Random,
+    *,
+    entry_mode: str = ENTRY_SPLIT_BY_GROUP_SEED,
 ) -> BracketSimulationResult:
-    """Simulate the project split-entry Double Elimination bracket."""
+    """Simulate the project's Double Elimination bracket for one entry mode.
+
+    ``split_by_group_seed`` starts the upper half of the seeds in Winners and
+    the lower half in Losers; ``all_winners`` starts everyone in Winners.
+    """
 
     participant_count = len(seeded_player_ids)
     if participant_count < 3:
@@ -60,11 +68,11 @@ def simulate_split_bracket(
 
     plan = build_bracket_plan(
         participant_count,
-        ENTRY_SPLIT_BY_GROUP_SEED,
+        entry_mode,
     )
     routes = build_bracket_route_plan(
         participant_count,
-        ENTRY_SPLIT_BY_GROUP_SEED,
+        entry_mode,
     )
     match_metadata = {
         str(match["match_code"]): match for match in plan
@@ -81,7 +89,14 @@ def simulate_split_bracket(
         ).append(str(route["source_code"]))
 
     bracket_size = get_bracket_size(participant_count)
-    pairs = get_split_bracket_seed_pairs(bracket_size)
+    if entry_mode == ENTRY_SPLIT_BY_GROUP_SEED:
+        pairs = get_split_bracket_seed_pairs(bracket_size)
+    elif entry_mode == ENTRY_ALL_WINNERS:
+        pairs = {
+            BRACKET_SIDE_WINNERS: get_first_round_seed_pairs(bracket_size),
+        }
+    else:
+        raise ValueError(f"Unsupported bracket entry mode: {entry_mode}")
     seeded = {
         seed: (
             seeded_player_ids[seed - 1]
@@ -90,7 +105,7 @@ def simulate_split_bracket(
         )
         for seed in range(1, bracket_size + 1)
     }
-    for side in (BRACKET_SIDE_WINNERS, BRACKET_SIDE_LOSERS):
+    for side in pairs:
         first_round_codes = [
             str(match["match_code"])
             for match in plan

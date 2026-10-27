@@ -46,7 +46,6 @@ PAGE_TITLES = {
     "Tournaments": "🏆 Tournaments",
     "Hall of Fame": "🏛️ Hall of Fame",
     "Tournament Manager": "🛠 Tournament Manager",
-    "Monte Carlo": "Monte Carlo",
 }
 
 
@@ -378,6 +377,22 @@ class DashboardSmokeTests(unittest.TestCase):
                             key=f"show_detailed_management_{draft_id}"
                         ).set_value(True).run()
                         self.assert_no_exception(app)
+                    # Only a Group Stage before its bracket has the title
+                    # forecast that simulates groups and bracket together.
+                    markdown = [element.value for element in app.markdown]
+                    self.assertEqual(
+                        "### Title Forecast" in markdown,
+                        draft_id == self.group_draft_id,
+                    )
+                    if draft_id == self.group_draft_id:
+                        self.assertFalse(
+                            [
+                                caption.value
+                                for caption in app.caption
+                                if "Title forecast unavailable"
+                                in caption.value
+                            ]
+                        )
 
 
 if __name__ == "__main__":

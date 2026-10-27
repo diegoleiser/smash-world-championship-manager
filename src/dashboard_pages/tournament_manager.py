@@ -32,6 +32,7 @@ from dashboard_pages.ui_components import (
 )
 from monte_carlo.artifacts import ArtifactError, load_artifact
 from monte_carlo.live_service import (
+    forecast_draft_title_before_bracket,
     forecast_live_draft_bracket,
     forecast_live_draft_group,
 )
@@ -70,6 +71,86 @@ def _cached_live_bracket_forecast(
         _load_live_forecast_model(artifact_path),
         10_000,
         20260730,
+    )
+
+
+@st.cache_data(show_spinner=False)
+def _cached_title_forecast(
+    db_path: str,
+    draft_id: str,
+    artifact_path: str,
+):
+    return forecast_draft_title_before_bracket(
+        db_path,
+        draft_id,
+        _load_live_forecast_model(artifact_path),
+        10_000,
+        20260730,
+    )
+
+
+def title_forecast_table(forecast) -> dict[str, Any]:
+    """Return dashboard_table_html data for a title forecast before the bracket.
+
+    The Winners chance stays in the group tables: there it comes from the
+    Group forecast, whose open Sets use neutral Day values, so a second,
+    slightly different value here would only confuse.
+    """
+
+    return {
+        "headers": ["Player", "P(GF)", "P(Title)"],
+        "rows": [
+            [
+                player.display_name,
+                f"{player.grand_final_probability * 100:.1f}%",
+                f"{player.title_probability * 100:.1f}%",
+            ]
+            for player in forecast.players
+        ],
+        "columns": "minmax(10rem,1.6fr) minmax(6rem,0.8fr) minmax(6rem,0.8fr)",
+        "mobile_roles": ["title", "stat", "stat"],
+    }
+
+
+def _render_title_forecast(
+    *,
+    db_path: str | Path,
+    draft_id: str,
+    artifact_path: Path,
+) -> None:
+    st.markdown("### Title Forecast")
+    try:
+        with st.spinner("Simulating the tournament…"):
+            forecast = _cached_title_forecast(
+                str(db_path),
+                draft_id,
+                str(artifact_path),
+            )
+    except (
+        ArtifactError,
+        FileNotFoundError,
+        KeyError,
+        RuntimeError,
+        ValueError,
+    ) as exc:
+        st.caption(f"Title forecast unavailable: {exc}")
+        return
+    table = title_forecast_table(forecast)
+    st.markdown(
+        dashboard_table_html(
+            table["headers"],
+            table["rows"],
+            columns=table["columns"],
+            emphasis_column=0,
+            mobile_roles=table["mobile_roles"],
+        ),
+        unsafe_allow_html=True,
+    )
+    st.caption(
+        "10'000 simulations of the remaining Group Sets and the whole "
+        "bracket · completed results fixed · one Day value per player and "
+        "simulated tournament · P(GF) reaches the Grand Final, P(Title) "
+        "wins the tournament"
     )
 
 
@@ -730,6 +811,12 @@ def _render_group_control_center(
             "10'000 simulations · completed results fixed · "
             "remaining Group Sets use frozen pre-tournament strengths"
         )
+        if show_win_probabilities:
+            _render_title_forecast(
+                db_path=db_path,
+                draft_id=draft_id,
+                artifact_path=artifact_path,
+            )
     with sets_tab:
         rows = [
             [
@@ -2244,6 +2331,11 @@ def render_tournament_manager(
                                     draft_id=selected_draft_id,
                                     artifact_path=model_artifact_path,
                                     player_names=forecast_player_names,
+                                )
+                                _render_title_forecast(
+                                    db_path=db_path,
+                                    draft_id=selected_draft_id,
+                                    artifact_path=model_artifact_path,
                                 )
 
                             group_standings = (

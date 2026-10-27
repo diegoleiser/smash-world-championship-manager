@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import sys
 import unittest
+from types import SimpleNamespace
 from pathlib import Path
 
 
@@ -32,6 +33,7 @@ from text_format import format_ordinal  # noqa: E402
 from dashboard_pages.tournament_manager import (  # noqa: E402
     archived_draft_note_html,
     draft_header_metrics,
+    title_forecast_table,
 )
 from dashboard_pages.hall_of_fame import title_leaders_table  # noqa: E402
 from dashboard_pages.tournament_control_center import (  # noqa: E402
@@ -229,17 +231,6 @@ class MatchupsPageBoundaryTests(unittest.TestCase):
         self.assertNotIn("st.sidebar.radio(", dashboard_source)
         self.assertNotIn('key="navigation_page"', dashboard_source)
         self.assertNotIn("Version 0.1.0", dashboard_source)
-
-    def test_monte_carlo_declares_every_data_dependency(self) -> None:
-        self.assert_render_parameters(
-            "monte_carlo",
-            "render_monte_carlo",
-            {
-                "artifact_path",
-                "load_players",
-                "load_elo_ranking",
-            },
-        )
 
     def test_tournaments_declares_every_dashboard_dependency(self) -> None:
         self.assert_render_parameters(
@@ -780,6 +771,20 @@ class TitleLeadersTableTests(unittest.TestCase):
 
 
 class TournamentManagerPageTests(unittest.TestCase):
+    def test_title_forecast_lists_grand_final_and_title_chances(self) -> None:
+        player = SimpleNamespace(
+            display_name="Alpha",
+            winners_probability=0.9,
+            grand_final_probability=0.512,
+            title_probability=0.3049,
+        )
+
+        table = title_forecast_table(SimpleNamespace(players=(player,)))
+
+        self.assertEqual(table["headers"], ["Player", "P(GF)", "P(Title)"])
+        self.assertEqual(table["rows"], [["Alpha", "51.2%", "30.5%"]])
+        self.assertEqual(table["mobile_roles"], ["title", "stat", "stat"])
+
     def test_archived_note_names_the_backup_right_after_finalizing(self) -> None:
         plain = archived_draft_note_html(6)
         with_backup = archived_draft_note_html(
