@@ -23,7 +23,7 @@ def get_json(endpoint: str) -> Any:
         params={"api_key": API_KEY},
         headers={
             "Accept": "application/json",
-            "User-Agent": "smash-world-cup-manager/1.0",
+            "User-Agent": "smash-world-championship-manager/1.0",
             "Connection": "close",
         },
         timeout=30,

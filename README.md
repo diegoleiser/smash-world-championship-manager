@@ -1,4 +1,4 @@
-# Smash World Cup Manager
+# Smash World Championship Manager
 
 A private tournament operations and analytics platform for a recurring local
 **Super Smash Bros. Ultimate** competition. It combines live tournament
@@ -30,10 +30,12 @@ image to open the complete interface at full resolution.
 
 | Analytics and player history | Archived competition |
 |---|---|
-| [![Dashboard overview with rankings, forecasts and Elo history](docs/screenshots/dashboard-overview.png)](docs/screenshots/dashboard-overview.png) | [![Completed tournament summary and double-elimination bracket](docs/screenshots/archived-tournament.png)](docs/screenshots/archived-tournament.png) |
-| **Dashboard overview** — archive health, rankings, narrative preview and rating trends | **Tournament archive** — podium, event recap, complete bracket and recorded sets |
-| [![Player profile with career metrics and Elo chart](docs/screenshots/player-profile.png)](docs/screenshots/player-profile.png) | [![Live tournament control center and bracket](docs/screenshots/tournament-manager.png)](docs/screenshots/tournament-manager.png) |
-| **Player profile** — career record, rivalries, streaks and rating progression | **Tournament Manager** — persisted draft, next playable sets, forecasts and live bracket |
+| [![Dashboard overview with archive summary, Elo ranking and rating history](docs/screenshots/dashboard-overview.png)](docs/screenshots/dashboard-overview.png) | [![Completed tournament summary, achievements and double-elimination bracket](docs/screenshots/archived-tournament.png)](docs/screenshots/archived-tournament.png) |
+| **Dashboard overview** — archive summary, rankings, tournament preview and rating trends | **Tournament archive** — podium, event recap, unlocked achievements, bracket and recorded sets |
+| [![Player profile with career metrics, achievements and Elo chart](docs/screenshots/player-profile.png)](docs/screenshots/player-profile.png) | [![Hall of Fame with title leaders and all-time records](docs/screenshots/hall-of-fame.png)](docs/screenshots/hall-of-fame.png) |
+| **Player profile** — career record, rivalries, streaks, achievements and rating progression | **Hall of Fame** — title leaders, all-time records, rivalries and recent milestones |
+| [![Head-to-head matrix and player comparison](docs/screenshots/matchups.png)](docs/screenshots/matchups.png) | [![Live tournament control center and bracket](docs/screenshots/tournament-manager.png)](docs/screenshots/tournament-manager.png) |
+| **Matchups** — head-to-head matrix, rivalry summary and career comparison | **Tournament Manager** — persisted draft, next playable sets, win probabilities and live bracket |
 
 ## What the application does
 
@@ -54,8 +56,11 @@ The public-facing dashboard provides:
 - current Elo rankings and rating history
 - tournament archive, group tables, brackets and final standings
 - player profiles, performance trends and placement distributions
+- achievements with unlock dates, tiers and holder lists
+- a Hall of Fame with title leaders, all-time records and recent milestones
+- the biggest upsets, measured by the Elo gap before the set
 - head-to-head records and matchup comparisons
-- deterministic narrative summaries of notable results and trends
+- deterministic narrative summaries of notable results, milestones and trends
 - live qualification, bracket and championship probabilities
 - optional imports from Challonge for historical tournaments
 
@@ -100,6 +105,9 @@ The same canonical standings and Elo rules are used for live previews and
 final archival calculations. Group-stage ties account for head-to-head mini
 tables, game records, forfeits and unequal playing opportunities. Historical
 Challonge tournaments remain compatible with nullable archive metadata.
+Early tournaments where only the champion is known still count toward
+appearances, titles and placement statistics without inventing missing
+results.
 
 ### Live probabilistic forecasts
 
@@ -129,7 +137,7 @@ changes.
 ```text
 Streamlit pages
     │
-    ├── Tournament Control Center
+    ├── Tournament Manager
     │       ├── tournament workflow and bracket engine
     │       └── live Monte Carlo forecasting
     │
@@ -188,9 +196,9 @@ Start the dashboard:
 python -m streamlit run dashboard.py
 ```
 
-The generator writes to the application's standard local paths and refuses to
-overwrite existing data. Its `--replace` option is only for deliberately
-disposable demo outputs.
+The dashboard reads the database at `data/smash_wm.db`. The generator writes
+to the application's standard local paths and refuses to overwrite existing
+data. Its `--replace` option is only for deliberately disposable demo outputs.
 
 For a private installation, copy `examples/seed.example.json` to
 `data/private_seed.json`, replace its placeholders and run `python src/init_db.py`.
@@ -232,6 +240,10 @@ python src/verify_all.py
 python src/verify_import.py wc_01
 ```
 
+## License
+
+Released under the [MIT License](LICENSE).
+
 ## Data privacy
 
 Real participant data and operational artifacts remain local. The following
@@ -252,4 +264,4 @@ Only synthetic examples belong in `examples/` and in public screenshots.
   path. Multi-group probabilities are calculated jointly, but lock labels stay
   conservative while any group set remains unresolved.
 - The separate Monte Carlo page is a lightweight planning and test surface;
-  production forecasts are integrated into the Tournament Control Center.
+  production forecasts are integrated into the Tournament Manager.

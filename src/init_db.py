@@ -136,7 +136,7 @@ def initialize_database(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Initialize the Smash World Cup database from a private seed file."
+        description="Initialize the Smash World Championship database from a private seed file."
     )
     parser.add_argument("--db", type=Path, default=DEFAULT_DB_PATH)
     parser.add_argument("--schema", type=Path, default=DEFAULT_SCHEMA_PATH)
