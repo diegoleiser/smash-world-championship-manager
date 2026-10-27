@@ -15,6 +15,7 @@ try:
 except ImportError:  # pragma: no cover
     requests = None
 
+from db.backup import backup_database
 from db.migrations import MIGRATE_COMMAND, detect_version, latest_version
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -375,6 +376,15 @@ def import_payloads(
         connection.close()
         raise ValueError("Validation errors:\n- " + "\n- ".join(validation_issues))
 
+    backup_path = None
+    if replace:
+        # Replacing deletes the tournament's sets and participants first.
+        try:
+            backup_path = backup_database(DB_PATH, f"import_{tournament_id}")
+        except BaseException:
+            connection.close()
+            raise
+
     with connection:
         if replace:
             connection.execute("DELETE FROM matches WHERE tournament_id = ?", (tournament_id,))
@@ -415,6 +425,7 @@ def import_payloads(
 
     result = {
         "tournament_id": tournament_id,
+        "backup_path": backup_path,
         "participants": len(participant_rows),
         "matches": len(match_rows),
         "group_matches": stages["group"],
@@ -473,6 +484,8 @@ def main() -> None:
     )
 
     print(f"\n{args.tournament_id.upper()} imported successfully")
+    if result["backup_path"]:
+        print(f"Backup:           {result['backup_path']}")
     print(f"Participants:       {result['participants']}")
     print(f"Matches:          {result['matches']}")
     print(f"  Group stage:   {result['group_matches']}")

@@ -125,7 +125,8 @@ def _create_archived_tournaments(db_path: Path) -> None:
         )
         tournament.generate_draft_bracket(db_path, draft_id)
         _complete_ready_matches(db_path, draft_id, seed_order)
-        tournament.finalize_draft_tournament(db_path, draft_id)
+        # A freshly generated archive needs no safety copy per tournament.
+        tournament.finalize_draft_tournament(db_path, draft_id, backup=False)
 
 
 def _create_live_tournament(db_path: Path) -> None:

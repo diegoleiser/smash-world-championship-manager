@@ -480,6 +480,38 @@ class TournamentFinalizationTests(unittest.TestCase):
         self.assertEqual(inactive_player, 0)
 
 
+    def backups(self) -> list[Path]:
+        return sorted(
+            self.db_path.parent.glob(
+                "tournament-finalization_before_finalize_wc_*.db"
+            )
+        )
+
+    def test_finalize_writes_a_backup_of_the_archive_first(self) -> None:
+        result = tournament.finalize_draft_tournament(
+            self.db_path,
+            "draft",
+        )
+
+        self.assertEqual(self.backups(), [result["backup_path"]])
+        with closing(sqlite3.connect(result["backup_path"])) as backup:
+            archived = backup.execute(
+                "SELECT COUNT(*) FROM tournaments"
+            ).fetchone()[0]
+            draft_status = backup.execute(
+                "SELECT status FROM tournament_drafts WHERE draft_id = 'draft'"
+            ).fetchone()[0]
+        self.assertEqual(archived, 0)
+        self.assertEqual(draft_status, "draft")
+
+    def test_refused_finalization_writes_no_backup(self) -> None:
+        tournament.finalize_draft_tournament(self.db_path, "draft")
+
+        with self.assertRaisesRegex(ValueError, "unfinished"):
+            tournament.finalize_draft_tournament(self.db_path, "draft")
+
+        self.assertEqual(len(self.backups()), 1)
+
 class TournamentFinalizationModuleBoundaryTests(unittest.TestCase):
     """Keep the existing tournament_manager API after extraction."""
 

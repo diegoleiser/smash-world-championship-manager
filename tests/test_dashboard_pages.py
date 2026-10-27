@@ -29,7 +29,10 @@ from dashboard_pages.player import (  # noqa: E402
     _player_selector_styles,
 )
 from text_format import format_ordinal  # noqa: E402
-from dashboard_pages.tournament_manager import draft_header_metrics  # noqa: E402
+from dashboard_pages.tournament_manager import (  # noqa: E402
+    archived_draft_note_html,
+    draft_header_metrics,
+)
 from dashboard_pages.hall_of_fame import title_leaders_table  # noqa: E402
 from dashboard_pages.tournament_control_center import (  # noqa: E402
     finalization_standings_table_data,
@@ -766,6 +769,16 @@ class TitleLeadersTableTests(unittest.TestCase):
 
 
 class TournamentManagerPageTests(unittest.TestCase):
+    def test_archived_note_names_the_backup_right_after_finalizing(self) -> None:
+        plain = archived_draft_note_html(6)
+        with_backup = archived_draft_note_html(
+            6, "smash_before_finalize_wc_06_<x>.db"
+        )
+
+        self.assertNotIn("Backup", plain)
+        self.assertIn("Backup of the archive before finalizing", with_backup)
+        self.assertIn("smash_before_finalize_wc_06_&lt;x&gt;.db", with_backup)
+
     def test_draft_header_uses_short_format_with_entry_note(self) -> None:
         metrics = draft_header_metrics({
             "tournament_number": 7,

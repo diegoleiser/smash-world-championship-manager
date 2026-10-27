@@ -218,6 +218,12 @@ second writes a backup next to the database
 migrations. The dashboard and the Challonge import refuse to run on an outdated
 schema and name this command.
 
+The same kind of backup is written automatically before the two larger writes:
+finalizing a tournament in the Tournament Manager
+(`smash_wm_before_finalize_wc_<number>_<time>.db`) and a Challonge import with
+`--replace` (`smash_wm_before_import_<tournament>_<time>.db`). Backups stay in
+`data/`, are never committed and are not deleted automatically.
+
 ## Optional Challonge import
 
 Copy the example environment file and add local credentials:
