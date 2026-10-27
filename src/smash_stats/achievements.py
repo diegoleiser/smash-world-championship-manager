@@ -6,7 +6,11 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Iterable
 
-from smash_stats.database import DEFAULT_DB_PATH, connect_db
+from smash_stats.database import (
+    DEFAULT_DB_PATH,
+    KNOWN_PARTICIPANTS_SQL,
+    connect_db,
+)
 from smash_stats.elo_history import (
     calculate_elo_history,
     get_elo_ranking_timeline,
@@ -185,9 +189,11 @@ def build_achievements(
     ``players`` maps player IDs to ``{"player": name}``. ``tournaments`` have
     ``tournament_number``, ``tournament_date`` and ``winner_id``;
     ``participants`` have ``tournament_number``, ``player_id``,
-    ``placement`` and optionally ``seed``. ``history`` is the chronological output of
-    ``calculate_elo_history`` (rated Sets only, no walkovers) and ``timeline``
-    that of ``get_elo_ranking_timeline`` over all players.
+    ``placement`` and optionally ``seed`` and ``recorded`` (0 for a champion
+    known only from the tournament, see ``KNOWN_PARTICIPANTS_SQL``).
+    ``history`` is the chronological output of ``calculate_elo_history``
+    (rated Sets only, no walkovers) and ``timeline`` that of
+    ``get_elo_ranking_timeline`` over all players.
     ``losers_finalists`` maps a tournament number to the Grand Final player
     from the Losers Bracket.
 
@@ -251,6 +257,8 @@ def build_achievements(
     # Championships, placements and bracket runs, tournament by tournament.
     placements: dict[int, dict[str, int | None]] = defaultdict(dict)
     seeds: dict[int, dict[str, int]] = defaultdict(dict)
+    # Tournaments with recorded participants; elsewhere only the champion is known.
+    recorded_field: set[int] = set()
     for participant in participants:
         number = int(participant["tournament_number"])
         player_id = str(participant["player_id"])
@@ -258,6 +266,8 @@ def build_achievements(
         placements[number][player_id] = int(placement) if placement is not None else None
         if participant.get("seed") is not None:
             seeds[number][player_id] = int(participant["seed"])
+        if participant.get("recorded", 1):
+            recorded_field.add(number)
 
     # Rated Set records per tournament: any loss, and the Group Stage record.
     lost_at: set[tuple[int, str]] = set()
@@ -299,8 +309,9 @@ def build_achievements(
             title_streak = (None, 0)
 
         field = placements[number]
-        if field:
-            # A tournament without archived placements does not break a run.
+        if number in recorded_field:
+            # Only a tournament with recorded participants breaks a run; where
+            # just the champion is known, nobody else's result is assumed.
             for player_id in list(podium_runs):
                 if (field.get(player_id) or PODIUM_PLACE + 1) > PODIUM_PLACE:
                     podium_runs[player_id] = 0
@@ -602,8 +613,9 @@ def get_achievements(
         ).fetchall()
         participant_rows = connection.execute(
             """
-            SELECT t.tournament_number, tp.player_id, tp.placement, tp.seed
-            FROM tournament_participants AS tp
+            SELECT t.tournament_number, tp.player_id, tp.placement, tp.seed,
+                tp.recorded
+            FROM (""" + KNOWN_PARTICIPANTS_SQL + """) AS tp
             JOIN tournaments AS t
               ON t.tournament_id = tp.tournament_id
             """

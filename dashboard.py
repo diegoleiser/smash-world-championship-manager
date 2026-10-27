@@ -769,7 +769,7 @@ def load_tournament_story_context(
                 tp.player_id,
                 p.display_name AS player,
                 tp.placement
-            FROM tournament_participants AS tp
+            FROM (""" + stats.KNOWN_PARTICIPANTS_SQL + """) AS tp
             JOIN tournaments AS t
               ON t.tournament_id = tp.tournament_id
             JOIN players AS p

@@ -769,6 +769,11 @@ def render_tournaments(
         [str(participant["player_id"]) for participant in participants],
     )
 
+    if not participants and not matches:
+        # Only the champion is known; header and recap already say that the
+        # details are missing, so empty tabs would add nothing.
+        return
+
     tab_labels = []
     if group_tables:
         tab_labels.append("Group Stage")

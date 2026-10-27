@@ -6,7 +6,12 @@ from pathlib import Path
 from typing import Any
 
 from smash_stats.common import _percentage
-from smash_stats.database import DEFAULT_DB_PATH, connect_db, resolve_player
+from smash_stats.database import (
+    DEFAULT_DB_PATH,
+    KNOWN_PARTICIPANTS_SQL,
+    connect_db,
+    resolve_player,
+)
 from smash_stats.elo_history import get_player_elo_summary
 
 
@@ -35,7 +40,7 @@ def get_player_stats(
                 AVG(tp.placement) AS average_result,
                 SUM(CASE WHEN tp.placement IS NOT NULL THEN 1 ELSE 0 END)
                     AS known_placements
-            FROM tournament_participants AS tp
+            FROM (""" + KNOWN_PARTICIPANTS_SQL + """) AS tp
             WHERE tp.player_id = ?
             """,
             (player_id,),
@@ -269,7 +274,9 @@ def get_player_history(
     """
     Returns a player’s tournament history in chronological order.
 
-    Titles are determined through tournaments.winner_id. Placements come from tournament_participants and may be None for incomplete historical tournaments.
+    Titles are determined through tournaments.winner_id. Placements come from
+    the known participants (see KNOWN_PARTICIPANTS_SQL) and may be None for
+    incomplete historical tournaments.
     """
 
     with connect_db(db_path) as connection:
@@ -297,7 +304,7 @@ def get_player_history(
                         ELSE 0
                     END
                 ) AS losses
-            FROM tournament_participants AS tp
+            FROM (""" + KNOWN_PARTICIPANTS_SQL + """) AS tp
             JOIN tournaments AS t
               ON t.tournament_id = tp.tournament_id
             JOIN players AS winner
