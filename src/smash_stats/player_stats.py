@@ -56,6 +56,8 @@ def get_player_stats(
             (player_id,),
         ).fetchone()
 
+        # Challonge imports store "group"/"knockout", Tournament Manager
+        # archives "group_stage"/"bracket"; both count for the phase records.
         match_stats = connection.execute(
             """
             SELECT
@@ -72,11 +74,11 @@ def get_player_stats(
                 SUM(CASE WHEN winner_id IS NULL THEN 1 ELSE 0 END)
                     AS undecided_matches,
 
-                SUM(CASE WHEN stage = 'group' THEN 1 ELSE 0 END)
+                SUM(CASE WHEN stage IN ('group', 'group_stage') THEN 1 ELSE 0 END)
                     AS group_matches,
                 SUM(
                     CASE
-                        WHEN stage = 'group'
+                        WHEN stage IN ('group', 'group_stage')
                          AND winner_id = ?
                         THEN 1
                         ELSE 0
@@ -84,7 +86,7 @@ def get_player_stats(
                 ) AS group_wins,
                 SUM(
                     CASE
-                        WHEN stage = 'group'
+                        WHEN stage IN ('group', 'group_stage')
                          AND winner_id IS NOT NULL
                          AND winner_id != ?
                         THEN 1
@@ -92,11 +94,11 @@ def get_player_stats(
                     END
                 ) AS group_losses,
 
-                SUM(CASE WHEN stage = 'knockout' THEN 1 ELSE 0 END)
+                SUM(CASE WHEN stage IN ('knockout', 'bracket') THEN 1 ELSE 0 END)
                     AS knockout_matches,
                 SUM(
                     CASE
-                        WHEN stage = 'knockout'
+                        WHEN stage IN ('knockout', 'bracket')
                          AND winner_id = ?
                         THEN 1
                         ELSE 0
@@ -104,7 +106,7 @@ def get_player_stats(
                 ) AS knockout_wins,
                 SUM(
                     CASE
-                        WHEN stage = 'knockout'
+                        WHEN stage IN ('knockout', 'bracket')
                          AND winner_id IS NOT NULL
                          AND winner_id != ?
                         THEN 1
