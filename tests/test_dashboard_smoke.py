@@ -243,9 +243,32 @@ class DashboardSmokeTests(unittest.TestCase):
             if element.value.startswith('<div class="hof-grid">')
         ]
         self.assertEqual(len(card_grids), 4)
-        self.assertIn('<header class="hof-card-title">Most Titles</header>', card_grids[0])
+        self.assertNotIn("Most Titles", "".join(card_grids))
+        self.assertIn('<header class="hof-card-title">Most Finals</header>', card_grids[0])
         self.assertIn("/players?player_id=", card_grids[0])
         self.assertNotIn("Losing Streak", "".join(card_grids))
+        self.assertIn("#### Title Leaders", [element.value for element in app.markdown])
+        title_tables = [
+            element.value
+            for element in app.markdown
+            if element.value.startswith('<div class="control-table-scroll">')
+            and 'data-label="Titles"' in element.value
+        ]
+        self.assertEqual(len(title_tables), 1)
+        self.assertIn("/players?player_id=", title_tables[0])
+
+    def test_home_no_longer_lists_title_leaders(self) -> None:
+        home = self.run_app()
+
+        self.assertNotIn("Title Leaders", [element.value for element in home.subheader])
+        ranking_tables = [
+            element.value
+            for element in home.markdown
+            if element.value.startswith('<div class="control-table-scroll">')
+            and 'data-label="Gap"' in element.value
+        ]
+        self.assertEqual(len(ranking_tables), 1)
+        self.assertNotIn('data-label="Status"', ranking_tables[0])
 
     def test_table_styles_are_loaded_once_per_page(self) -> None:
         app = self.run_app()

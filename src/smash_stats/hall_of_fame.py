@@ -90,6 +90,7 @@ def build_hall_of_fame(
     ``timeline`` that of ``get_elo_ranking_timeline``. Each record has a
     ``key``, ``group``, ``title``, ``unit`` and ranked ``entries``; every entry
     lists its ``players`` (two for rivalries), a ``value`` and a ``detail``.
+    ``most_titles`` ranks every title holder, the full title leader table.
     """
 
     def name(player_id: str) -> str:
@@ -125,13 +126,18 @@ def build_hall_of_fame(
         title: str,
         unit: str,
         candidates: Iterable[dict[str, Any]],
+        *,
+        rank_all: bool = False,
     ) -> dict[str, Any]:
         return {
             "key": key,
             "group": group,
             "title": title,
             "unit": unit,
-            "entries": rank_candidates(candidates, top_n=top_n),
+            "entries": rank_candidates(
+                candidates,
+                top_n=len(players) if rank_all else top_n,
+            ),
         }
 
     # Championships: titles from the tournament winner, finals and podiums
@@ -263,6 +269,7 @@ def build_hall_of_fame(
             "Most Titles",
             "titles",
             (single(player_id, count) for player_id, count in titles.items()),
+            rank_all=True,
         ),
         record(
             "most_finals",
