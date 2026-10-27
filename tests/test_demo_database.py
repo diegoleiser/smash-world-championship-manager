@@ -28,6 +28,8 @@ class DemoDatabaseTests(unittest.TestCase):
             artifact_path = temporary_path / "model"
 
             create_demo_database(db_path, artifact_path)
+            # Finalizing the demo tournaments writes no safety copies.
+            self.assertEqual(list(temporary_path.glob("*_before_*.db")), [])
 
             with sqlite3.connect(db_path) as connection:
                 player_count = connection.execute(

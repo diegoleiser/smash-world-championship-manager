@@ -300,8 +300,20 @@ def draft_header_metrics(draft: dict[str, Any]) -> list[tuple[str, str | int, st
     ]
 
 
-def archived_draft_note_html(tournament_number: int) -> str:
-    """Return the single note for a finalized draft, linking to its archive page."""
+def finalization_backup_key(draft_id: str) -> str:
+    """Session key that remembers the backup written when a draft was finalized."""
+
+    return f"finalization_backup_{draft_id}"
+
+
+def archived_draft_note_html(
+    tournament_number: int,
+    backup_name: str | None = None,
+) -> str:
+    """Return the single note for a finalized draft, linking to its archive page.
+
+    Right after finalizing, ``backup_name`` names the backup written first.
+    """
 
     link = internal_dashboard_link(
         f"View WC {tournament_number:02d} in Tournaments",
@@ -317,7 +329,14 @@ def archived_draft_note_html(tournament_number: int) -> str:
         'border-radius:0.6rem;background:rgba(63,185,80,0.10);'
         'color:var(--swc-positive);font-weight:600;">'
         f"Finalized and added to the permanent archive. {link}"
-        "</div>"
+        + (
+            '<div style="margin-top:0.35rem;font-weight:500;">'
+            f"Backup of the archive before finalizing: "
+            f"<code>{html.escape(backup_name)}</code></div>"
+            if backup_name
+            else ""
+        )
+        + "</div>"
     )
 
 
@@ -856,6 +875,9 @@ def _render_bracket_control_center(
                     )
                 else:
                     st.cache_data.clear()
+                    st.session_state[finalization_backup_key(draft_id)] = (
+                        Path(result["backup_path"]).name
+                    )
                     st.success(
                         f"WC {result['tournament_number']:02d} "
                         f"was archived successfully. "
@@ -1274,7 +1296,12 @@ def render_tournament_manager(
 
     if draft["status"] == "completed":
         st.markdown(
-            archived_draft_note_html(int(draft["tournament_number"])),
+            archived_draft_note_html(
+                int(draft["tournament_number"]),
+                st.session_state.get(
+                    finalization_backup_key(selected_draft_id)
+                ),
+            ),
             unsafe_allow_html=True,
         )
         return
@@ -3071,6 +3098,9 @@ def render_tournament_manager(
                             )
                         else:
                             st.cache_data.clear()
+                            st.session_state[
+                                finalization_backup_key(selected_draft_id)
+                            ] = Path(result["backup_path"]).name
                             st.success(
                                 f"WC {result['tournament_number']:02d} "
                                 f"was archived successfully. "

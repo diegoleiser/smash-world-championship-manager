@@ -57,7 +57,12 @@ def main() -> None:
             print(f"Pending migrations: {', '.join(pending) or 'none'}")
             return
         result = migrate_database(args.db)
-    except (FileNotFoundError, MigrationError, sqlite3.Error) as error:
+    except (
+        FileNotFoundError,
+        FileExistsError,
+        MigrationError,
+        sqlite3.Error,
+    ) as error:
         raise SystemExit(f"Migration failed: {error}") from error
 
     if result.backup_path is None:

@@ -15,6 +15,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
+from db.backup import backup_database
+
 
 MIGRATIONS_DIR = Path(__file__).resolve().parents[1] / "migrations"
 MIGRATE_COMMAND = "python src/migrate_db.py"
@@ -151,26 +153,6 @@ def database_version(db_path: Path) -> int:
     uri = f"{Path(db_path).resolve().as_uri()}?mode=ro"
     with closing(sqlite3.connect(uri, uri=True)) as connection:
         return detect_version(connection)
-
-
-def backup_database(
-    db_path: Path,
-    label: str,
-    *,
-    now: datetime | None = None,
-) -> Path:
-    """Copy the database next to itself as ``<name>_before_<label>_<time>.db``."""
-
-    timestamp = (now or datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
-    target = db_path.with_name(
-        f"{db_path.stem}_before_{label}_{timestamp}{db_path.suffix}"
-    )
-    if target.exists():
-        raise MigrationError(f"Backup already exists: {target}")
-    with closing(sqlite3.connect(db_path)) as source:
-        with closing(sqlite3.connect(target)) as copy:
-            source.backup(copy)
-    return target
 
 
 def migrate_database(

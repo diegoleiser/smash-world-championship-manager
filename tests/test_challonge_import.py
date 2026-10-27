@@ -11,7 +11,7 @@ import sqlite3
 import sys
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import closing, redirect_stdout
 from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
@@ -176,7 +176,7 @@ class ImportPayloadTests(ChallongeImportTestCase):
         self.assertEqual(
             result,
             {
-                "tournament_id": TOURNAMENT_ID,
+                "tournament_id": TOURNAMENT_ID, "backup_path": None,
                 "participants": 4, "matches": 4, "group_matches": 1,
                 "knockout_matches": 3, "scores_known": 2, "scores_unknown": 2,
                 "unknown_aliases": 0, "skipped": 0, "validation_errors": 0,
@@ -210,8 +210,25 @@ class ImportPayloadTests(ChallongeImportTestCase):
                 "VALUES ('stale', ?, 'alpha', 'beta')",
                 (TOURNAMENT_ID,),
             )
-        self.run_import(replace=True)
+        result = self.run_import(replace=True)
         self.assertNotIn("stale", [row[0] for row in self.table_rows()["matches"]])
+
+        # The backup written before replacing still holds the old rows.
+        backup_path = result["backup_path"]
+        self.assertEqual(backup_path.parent, self.db_path.parent)
+        self.assertTrue(backup_path.name.startswith("import_before_import_wc_01_"))
+        with closing(sqlite3.connect(backup_path)) as connection:
+            stale = connection.execute(
+                "SELECT COUNT(*) FROM matches WHERE match_id = 'stale'"
+            ).fetchone()[0]
+        self.assertEqual(stale, 1)
+
+    def test_import_without_replace_writes_no_backup(self) -> None:
+        self.run_import()
+
+        self.assertEqual(
+            sorted(self.db_path.parent.glob("import_before_*.db")), []
+        )
 
     def test_unknown_alias_is_rejected_without_writing(self) -> None:
         participants = participants_payload()
@@ -337,7 +354,11 @@ class CommandLineTests(ChallongeImportTestCase):
         return output.getvalue()
 
     def test_from_files_prints_summary(self) -> None:
-        self.assertEqual(self.run_cli("--from-files", "--replace"), self.SUMMARY)
+        output = self.run_cli("--from-files", "--replace")
+        lines = output.splitlines(keepends=True)
+
+        self.assertRegex(lines[2], r"^Backup: +\S+import_before_import_wc_01_")
+        self.assertEqual("".join(lines[:2] + lines[3:]), self.SUMMARY)
 
     def test_override_summary_lists_applied_corrections(self) -> None:
         self.write_override({"placements": {"Beta": 1}, "matches": {"B": {"score": "3-1"}}})

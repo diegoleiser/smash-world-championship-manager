@@ -11,6 +11,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from db.backup import backup_database
 from db.connection import open_sqlite_connection
 from smash_stats.elo_history import get_elo_ranking
 from smash_stats.elo_rules import (
@@ -631,6 +632,8 @@ def get_draft_finalization_preview(
 def finalize_draft_tournament(
     db_path: str | Path,
     draft_id: str,
+    *,
+    backup: bool = True,
 ) -> dict[str, Any]:
     """
     Archive a completed tournament draft.
@@ -642,7 +645,10 @@ def finalize_draft_tournament(
     - completed bracket matches
 
     The draft is marked as completed only after every archive row
-    has been inserted successfully.
+    has been inserted successfully. Once all checks pass, a backup of the
+    database is written next to it; its path is returned as
+    ``backup_path``. ``backup=False`` skips it for generated databases
+    such as the demo archive, and ``backup_path`` is then None.
     """
 
     preview = get_draft_finalization_preview(
@@ -694,6 +700,16 @@ def finalize_draft_tournament(
                 f"WC {preview['tournament_number']:02d} "
                 "already exists in the archive."
             )
+
+        # Every check passed: keep the archive as it was before writing.
+        backup_path = (
+            backup_database(
+                db_path,
+                f"finalize_wc_{int(preview['tournament_number']):02d}",
+            )
+            if backup
+            else None
+        )
 
         connection.execute(
             """
@@ -967,6 +983,7 @@ def finalize_draft_tournament(
 
     return {
         "tournament_id": tournament_id,
+        "backup_path": backup_path,
         "tournament_number":
             preview["tournament_number"],
         "champion_id":
