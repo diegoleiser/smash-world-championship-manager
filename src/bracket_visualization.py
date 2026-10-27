@@ -16,10 +16,6 @@ MATCH_CARD_HEIGHT = 108
 ROUND_GAP = 70
 MATCH_GAP = 28
 MATCH_PITCH = MATCH_CARD_HEIGHT + MATCH_GAP
-SECTION_CHROME_HEIGHT = 110
-BRACKET_VERTICAL_PADDING = 40
-MIN_COMPONENT_HEIGHT = 520
-MAX_COMPONENT_HEIGHT = 950
 
 BRACKET_CSS = f"""
 * {{
@@ -369,59 +365,113 @@ export default function(component) {
                     return svg;
                 }
 
-                function drawRoute(
-                    svg,
-                    section,
-                    route,
-                    sourceCard,
-                    targetCard
-                ) {
-                    const sectionRect =
-                        section.getBoundingClientRect();
+                function rowName(row) {
+                    const name = row
+                        ? row.querySelector(
+                            '.match-player-name'
+                        )
+                        : null;
 
-                    const sourceRect =
-                        sourceCard.getBoundingClientRect();
+                    return name
+                        ? name.textContent.trim()
+                        : '';
+                }
 
-                    const targetRect =
-                        targetCard.getBoundingClientRect();
-
-                    const startX =
-                        sourceRect.right
-                        - sectionRect.left;
-
-                    const startY =
-                        sourceRect.top
-                        - sectionRect.top
-                        + sourceRect.height / 2;
-
-                    const endX =
-                        targetRect.left
-                        - sectionRect.left;
-
-                    const targetPlayerRows =
-                        targetCard.querySelectorAll(
-                            '.match-player'
+                // The row of the player this route carries on: the
+                // winner, or the other player for a loser route. Null
+                // while the Set has no result.
+                function sourceRow(card, outcome) {
+                    const winnerRow =
+                        card.querySelector(
+                            '.match-player-winner'
                         );
 
-                    let endY =
-                        targetRect.top
-                        - sectionRect.top
-                        + targetRect.height / 2;
-
-                    const targetRow =
-                        targetPlayerRows[
-                            route.targetSlot - 1
-                        ];
-
-                    if (targetRow) {
-                        const rowRect =
-                            targetRow.getBoundingClientRect();
-
-                        endY =
-                            rowRect.top
-                            - sectionRect.top
-                            + rowRect.height / 2;
+                    if (!winnerRow) {
+                        return null;
                     }
+
+                    if (outcome !== 'loser') {
+                        return winnerRow;
+                    }
+
+                    return Array.from(
+                        card.querySelectorAll(
+                            '.match-player'
+                        )
+                    ).find(
+                        (row) => row !== winnerRow
+                    ) || null;
+                }
+
+                // The row where the carried player appears in the next
+                // Set, falling back to the route's target slot.
+                function targetRow(card, slot, playerName) {
+                    const rows = Array.from(
+                        card.querySelectorAll(
+                            '.match-player'
+                        )
+                    );
+
+                    const namedRow = playerName
+                        ? rows.find(
+                            (row) =>
+                                rowName(row) === playerName
+                        )
+                        : null;
+
+                    return namedRow
+                        || rows[slot - 1]
+                        || null;
+                }
+
+                function centerY(element, originRect) {
+                    const rect =
+                        element.getBoundingClientRect();
+
+                    return rect.top
+                        - originRect.top
+                        + rect.height / 2;
+                }
+
+                function appendRoutePath(
+                    svg,
+                    origin,
+                    route,
+                    sourceCard,
+                    targetCard,
+                    className
+                ) {
+                    const originRect =
+                        origin.getBoundingClientRect();
+
+                    const fromRow = sourceRow(
+                        sourceCard,
+                        route.sourceOutcome
+                    );
+
+                    const toRow = targetRow(
+                        targetCard,
+                        route.targetSlot,
+                        rowName(fromRow)
+                    );
+
+                    const startX =
+                        sourceCard.getBoundingClientRect().right
+                        - originRect.left;
+
+                    const startY = centerY(
+                        fromRow || sourceCard,
+                        originRect
+                    );
+
+                    const endX =
+                        targetCard.getBoundingClientRect().left
+                        - originRect.left;
+
+                    const endY = centerY(
+                        toRow || targetCard,
+                        originRect
+                    );
 
                     const middleX =
                         startX
@@ -443,17 +493,31 @@ export default function(component) {
                         ].join(' ')
                     );
 
-                    const className =
-                        route.sourceOutcome === 'loser'
-                        ? 'bracket-line bracket-line-loser'
-                        : 'bracket-line';
-
                     path.setAttribute(
                         'class',
                         className
                     );
 
                     svg.appendChild(path);
+                }
+
+                function drawRoute(
+                    svg,
+                    section,
+                    route,
+                    sourceCard,
+                    targetCard
+                ) {
+                    appendRoutePath(
+                        svg,
+                        section,
+                        route,
+                        sourceCard,
+                        targetCard,
+                        route.sourceOutcome === 'loser'
+                        ? 'bracket-line bracket-line-loser'
+                        : 'bracket-line'
+                    );
                 }
 
                 function alignFinalsPanel() {
@@ -555,79 +619,14 @@ export default function(component) {
                     sourceCard,
                     targetCard
                 ) {
-                    const canvasRect =
-                        canvas.getBoundingClientRect();
-
-                    const sourceRect =
-                        sourceCard.getBoundingClientRect();
-
-                    const targetRect =
-                        targetCard.getBoundingClientRect();
-
-                    const startX =
-                        sourceRect.right
-                        - canvasRect.left;
-
-                    const startY =
-                        sourceRect.top
-                        - canvasRect.top
-                        + sourceRect.height / 2;
-
-                    const endX =
-                        targetRect.left
-                        - canvasRect.left;
-
-                    const targetRows =
-                        targetCard.querySelectorAll(
-                            '.match-player'
-                        );
-
-                    let endY =
-                        targetRect.top
-                        - canvasRect.top
-                        + targetRect.height / 2;
-
-                    const targetRow =
-                        targetRows[
-                            route.targetSlot - 1
-                        ];
-
-                    if (targetRow) {
-                        const rowRect =
-                            targetRow.getBoundingClientRect();
-
-                        endY =
-                            rowRect.top
-                            - canvasRect.top
-                            + rowRect.height / 2;
-                    }
-
-                    const middleX =
-                        startX
-                        + (endX - startX) / 2;
-
-                    const path =
-                        document.createElementNS(
-                            'http://www.w3.org/2000/svg',
-                            'path'
-                        );
-
-                    path.setAttribute(
-                        'd',
-                        [
-                            'M', startX, startY,
-                            'L', middleX, startY,
-                            'L', middleX, endY,
-                            'L', endX, endY,
-                        ].join(' ')
-                    );
-
-                    path.setAttribute(
-                        'class',
+                    appendRoutePath(
+                        svg,
+                        canvas,
+                        route,
+                        sourceCard,
+                        targetCard,
                         'bracket-line'
                     );
-
-                    svg.appendChild(path);
                 }
 
                 function drawBracketLines() {
@@ -1453,65 +1452,19 @@ def build_bracket_html(
     """
 
 
-def get_recommended_bracket_height(
-    matches: list[dict[str, Any]],
-    routes: list[dict[str, Any]],
-) -> int:
-    """Return a compact component height that still fits the bracket."""
-
-    hidden_match_codes = _get_hidden_technical_match_codes(
-        matches,
-        routes,
-    )
-    section_heights = []
-
-    for bracket_side in ("winners", "losers"):
-        side_matches = [
-            match
-            for match in matches
-            if str(match.get("bracket_side") or "") == bracket_side
-            and str(match.get("match_code") or "")
-            not in hidden_match_codes
-        ]
-        grouped_rounds = _group_matches_by_round(side_matches)
-
-        if grouped_rounds:
-            maximum_match_count = max(
-                len(round_matches)
-                for _number, _label, round_matches in grouped_rounds
-            )
-            section_heights.append(
-                SECTION_CHROME_HEIGHT
-                + maximum_match_count * MATCH_PITCH
-            )
-
-    content_height = (
-        sum(section_heights)
-        + BRACKET_VERTICAL_PADDING
-    )
-
-    return max(
-        MIN_COMPONENT_HEIGHT,
-        min(MAX_COMPONENT_HEIGHT, content_height),
-    )
-
-
 def render_bracket(
     matches: list[dict[str, Any]],
     routes: list[dict[str, Any]],
     *,
     selected_match_code: str | None = None,
     component_key: str,
-    height: int | None = None,
     hide_played_status: bool = False,
 ) -> str | None:
-    """Render the bracket and return the clicked match code."""
+    """Render the bracket and return the clicked match code.
 
-    if height is None:
-        height = get_recommended_bracket_height(
-            matches,
-            routes,
-        )
+    The component grows with its content, so every round is visible without
+    an inner vertical scroll; wide brackets still scroll sideways.
+    """
 
     bracket_html = build_bracket_html(
         matches,
@@ -1526,7 +1479,7 @@ def render_bracket(
         },
         key=component_key,
         width="stretch",
-        height=height,
+        height="content",
         on_clicked_match_change=lambda: None,
     )
 
