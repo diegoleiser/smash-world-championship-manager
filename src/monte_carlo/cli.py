@@ -15,7 +15,7 @@ def _percent(value: float) -> str:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Smash World Cup Combined-model tools.",
+        description="Smash World Championship Combined-model tools.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 

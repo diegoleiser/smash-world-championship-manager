@@ -268,7 +268,7 @@ def create_demo_database(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Create a synthetic Smash World Cup Manager demo."
+        description="Create a synthetic Smash World Championship Manager demo."
     )
     parser.add_argument("--db", type=Path, default=DEFAULT_DB_PATH)
     parser.add_argument(
