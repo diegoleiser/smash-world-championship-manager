@@ -174,13 +174,12 @@ tests/                       Unit and UI-regression tests
 
 ## Run locally
 
-Requirements: Python 3 and a virtual environment are recommended.
+Requirements: Python 3.13 (the version CI tests) in a virtual environment.
 
 ```bash
-python3 -m venv .venv
+python3.13 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
-python -m pip install -r requirements-dashboard.txt
 ```
 
 Create a complete local demonstration with synthetic players, four archived
