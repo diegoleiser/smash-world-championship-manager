@@ -202,6 +202,22 @@ data. Its `--replace` option is only for deliberately disposable demo outputs.
 For a private installation, copy `examples/seed.example.json` to
 `data/private_seed.json`, replace its placeholders and run `python src/init_db.py`.
 
+## Update an existing database
+
+When a new version adds schema changes, bring an existing database up to date
+before starting the dashboard:
+
+```bash
+python src/migrate_db.py --dry-run
+python src/migrate_db.py
+```
+
+The first command only shows the current level and the pending migrations. The
+second writes a backup next to the database
+(`smash_wm_before_migration_<number>_<time>.db`) and then applies the pending
+migrations. The dashboard and the Challonge import refuse to run on an outdated
+schema and name this command.
+
 ## Optional Challonge import
 
 Copy the example environment file and add local credentials:

@@ -65,6 +65,9 @@ class InitializeDatabaseTests(unittest.TestCase):
                       AND name = 'tournament_drafts'
                     """
                 ).fetchone()
+                user_version = connection.execute(
+                    "PRAGMA user_version"
+                ).fetchone()[0]
 
             self.assertTrue(
                 {
@@ -74,6 +77,7 @@ class InitializeDatabaseTests(unittest.TestCase):
                 }.issubset(match_columns)
             )
             self.assertIsNotNone(draft_table)
+            self.assertEqual(user_version, 5)
 
 
 if __name__ == "__main__":

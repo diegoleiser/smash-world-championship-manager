@@ -7,6 +7,8 @@ import unicodedata
 from pathlib import Path
 from typing import Any
 
+from db.migrations import MigrationError, available_migrations
+
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DB_PATH = ROOT / "data" / "smash_wm.db"
@@ -98,10 +100,12 @@ def initialize_database(
     with sqlite3.connect(db_path) as connection:
         connection.execute("PRAGMA foreign_keys = ON")
         connection.executescript(schema_path.read_text(encoding="utf-8"))
-        for migration_path in sorted(migrations_dir.glob("*.sql")):
+        migrations = available_migrations(migrations_dir)
+        for migration in migrations:
             connection.executescript(
-                migration_path.read_text(encoding="utf-8")
+                migration.path.read_text(encoding="utf-8")
             )
+        connection.execute(f"PRAGMA user_version = {len(migrations)}")
         connection.executemany(
             """
             INSERT INTO players(
@@ -159,6 +163,7 @@ def main() -> None:
         ValueError,
         sqlite3.Error,
         json.JSONDecodeError,
+        MigrationError,
     ) as error:
         raise SystemExit(f"Initialization failed: {error}") from error
 

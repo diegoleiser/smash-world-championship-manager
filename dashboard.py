@@ -33,6 +33,12 @@ try:
         versus_header_html,
     )
     from dashboard_pages.theme import dashboard_theme_css
+    from db.migrations import (
+        MIGRATE_COMMAND,
+        MigrationError,
+        database_version,
+        latest_version,
+    )
     import milestones
     from narrative_stories import (
         load_story_archive,
@@ -85,7 +91,8 @@ st.markdown(
 )
 
 def require_database() -> None:
-    """Stops the app with a clear message if the database is missing."""
+    """Stops the app with a clear message if the database is missing or
+    needs a schema migration."""
 
     if not DB_PATH.exists():
         st.error(f"Database not found: `{DB_PATH}`")
@@ -98,6 +105,20 @@ def require_database() -> None:
             "└── src/smash_statistics.py\n"
             "```"
         )
+        st.stop()
+
+    try:
+        version = database_version(DB_PATH)
+    except MigrationError as error:
+        st.error(f"Database schema not recognised: {error}")
+        st.stop()
+    if version < latest_version():
+        st.error(
+            f"The database schema is at level {version}; this version of the "
+            f"dashboard needs level {latest_version()}."
+        )
+        st.info("Run the migration (it writes a backup first):")
+        st.code(MIGRATE_COMMAND, language="bash")
         st.stop()
 
 

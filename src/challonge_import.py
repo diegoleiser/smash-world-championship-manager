@@ -15,6 +15,8 @@ try:
 except ImportError:  # pragma: no cover
     requests = None
 
+from db.migrations import MIGRATE_COMMAND, detect_version, latest_version
+
 ROOT = Path(__file__).resolve().parents[1]
 DB_PATH = ROOT / "data" / "smash_wm.db"
 RAW_DIR = ROOT / "data" / "raw"
@@ -96,23 +98,14 @@ def load_alias_map(connection: sqlite3.Connection) -> dict[str, str]:
     }
 
 
-def ensure_match_columns(connection: sqlite3.Connection) -> None:
-    """Add source-detail columns to databases created with the older schema."""
-    existing = {
-        row["name"] for row in connection.execute("PRAGMA table_info(matches)")
-    }
-    additions = {
-        "stage": "TEXT",
-        "challonge_match_id": "TEXT",
-        "challonge_identifier": "TEXT",
-        "challonge_group_id": "TEXT",
-        "challonge_round": "INTEGER",
-        "suggested_play_order": "INTEGER",
-        "completed_at": "TEXT",
-    }
-    for name, sql_type in additions.items():
-        if name not in existing:
-            connection.execute(f"ALTER TABLE matches ADD COLUMN {name} {sql_type}")
+def require_current_schema(connection: sqlite3.Connection) -> None:
+    """Refuse to import into a database that still needs migrations."""
+    version = detect_version(connection)
+    if version < latest_version():
+        raise ValueError(
+            f"The database schema is at level {version}; run "
+            f"{MIGRATE_COMMAND} before importing."
+        )
 
 
 def fetch_json(tournament_ref: str, endpoint: str) -> Any:
@@ -213,7 +206,7 @@ def import_payloads(
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON")
-    ensure_match_columns(connection)
+    require_current_schema(connection)
 
     tournament = connection.execute(
         "SELECT tournament_id FROM tournaments WHERE tournament_id = ?",
