@@ -827,6 +827,7 @@ def _select_milestone(
 
     priority_rules = [
         ("first World Championship title", 100),
+        ("100 recorded set wins", 95),
         ("50 recorded set wins", 90),
         ("25 recorded set wins", 80),
         ("new career-best placement", 70),
@@ -834,7 +835,6 @@ def _select_milestone(
         ("tenth tournament appearance", 50),
         ("10 World Championship titles", 45),
         ("5 World Championship titles", 40),
-        ("10 recorded set wins", 30),
         ("fifth tournament appearance", 20),
     ]
 

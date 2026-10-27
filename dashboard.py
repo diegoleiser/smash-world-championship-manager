@@ -172,6 +172,13 @@ def load_upsets() -> list[dict[str, Any]]:
 
 
 @st.cache_data
+def load_achievements() -> list[dict[str, Any]]:
+    """Loads every unlocked achievement of the archive, oldest first."""
+
+    return stats.get_achievements(DB_PATH)
+
+
+@st.cache_data
 def load_hall_of_fame(include_inactive: bool) -> list[dict[str, Any]]:
     """Loads the Hall of Fame records with their top three holders."""
 
@@ -1119,6 +1126,7 @@ def show_player_page(include_inactive: bool) -> None:
         load_player_insights=load_player_insights,
         load_elo_ranking=load_elo_ranking,
         load_upsets=load_upsets,
+        load_achievements=load_achievements,
         format_ordinal=format_ordinal,
     )
 
@@ -1229,6 +1237,7 @@ def show_tournaments(include_inactive: bool) -> None:
         load_tournament_story_context=load_tournament_story_context,
         tournament_elo_changes=tournament_elo_changes,
         load_upsets=load_upsets,
+        load_achievements=load_achievements,
         format_ordinal=format_ordinal,
         show_archived_match_dialog=show_archived_match_dialog,
     )

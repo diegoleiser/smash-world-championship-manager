@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 APPEARANCE_MILESTONES = {5, 10}
-WIN_MILESTONES = {10, 25, 50}
+WIN_MILESTONES = {25, 50, 100}
 
 
 def _get_tournament(
@@ -131,7 +131,12 @@ def _detect_win_milestones(
     connection: sqlite3.Connection,
     tournament: sqlite3.Row,
 ) -> list[str]:
-    """Detects cumulative set-win milestones reached at this tournament."""
+    """
+    Detects cumulative set-win milestones reached at this tournament.
+
+    Only rated Sets count, so walkover wins are excluded, as in the Elo
+    history and the set-win achievements.
+    """
 
     rows = connection.execute(
         """
@@ -165,6 +170,7 @@ def _detect_win_milestones(
                 m.player_1_id = p.player_id
                 OR m.player_2_id = p.player_id
              )
+         AND COALESCE(m.walkover, 0) = 0
         LEFT JOIN tournaments AS t
           ON t.tournament_id = m.tournament_id
         WHERE tp.tournament_id = ?

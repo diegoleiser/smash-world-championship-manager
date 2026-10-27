@@ -248,6 +248,7 @@ class MatchupsPageBoundaryTests(unittest.TestCase):
                 "load_tournament_story_context",
                 "tournament_elo_changes",
                 "load_upsets",
+                "load_achievements",
                 "format_ordinal",
                 "show_archived_match_dialog",
             },
@@ -319,6 +320,7 @@ class MatchupsPageBoundaryTests(unittest.TestCase):
                 "load_player_insights",
                 "load_elo_ranking",
                 "load_upsets",
+                "load_achievements",
                 "format_ordinal",
             },
         )

@@ -36,6 +36,12 @@ from smash_stats.common import (
     _format_percent,
     _percentage,
 )
+from smash_stats.achievements import (
+    ACHIEVEMENT_CATALOGUE,
+    ACHIEVEMENT_GROUPS,
+    get_achievements,
+    summarize_achievements,
+)
 from smash_stats.hall_of_fame import HALL_OF_FAME_GROUPS, get_hall_of_fame
 from smash_stats.rankings import get_ranking, print_ranking
 from smash_stats.records import get_smash_records, print_smash_records
@@ -453,6 +459,33 @@ def print_biggest_upsets(upsets: list[dict[str, Any]]) -> None:
         )
 
 
+def print_achievements(achievements: list[dict[str, Any]]) -> None:
+    """Prints unlocked achievements, oldest first."""
+
+    print("\nAchievements")
+    print("=" * 72)
+
+    if not achievements:
+        print("No achievements unlocked.")
+        return
+
+    header = f"{'WC':>4} {'Date':<10}  {'Player':<16} {'Achievement':<18} Detail"
+    print(header)
+    print("-" * len(header))
+
+    for entry in achievements:
+        title = entry["title"]
+        if entry["occurrence"] > 1:
+            title = f"{title} ×{entry['occurrence']}"
+        print(
+            f"{entry['tournament_number']:>4} "
+            f"{entry['tournament_date'] or '–':<10}  "
+            f"{entry['player']:<16} "
+            f"{title:<18} "
+            f"{entry['detail']}".rstrip()
+        )
+
+
 def print_elo_ranking(ranking: list[dict[str, Any]]) -> None:
     """Gibt das aktuelle Elo-Ranking im Terminal aus."""
 
@@ -713,6 +746,14 @@ def parse_args() -> argparse.Namespace:
         help="Output the biggest Elo upsets",
     )
     parser.add_argument(
+        "--achievements",
+        action="store_true",
+        help=(
+            "Output unlocked achievements; optionally for one player "
+            "or with --tournament-number"
+        ),
+    )
+    parser.add_argument(
         "--limit",
         type=int,
         default=10,
@@ -847,6 +888,32 @@ def main() -> None:
                 print(json.dumps(upsets, ensure_ascii=False, indent=2))
             else:
                 print_biggest_upsets(upsets)
+
+            return
+
+        if args.achievements:
+            unlocked = get_achievements(args.db, k_factor=args.elo_k)
+
+            if args.player:
+                with connect_db(args.db) as connection:
+                    player_id = str(
+                        resolve_player(connection, args.player)["player_id"]
+                    )
+                unlocked = [
+                    entry for entry in unlocked
+                    if entry["player_id"] == player_id
+                ]
+
+            if args.tournament_number is not None:
+                unlocked = [
+                    entry for entry in unlocked
+                    if entry["tournament_number"] == args.tournament_number
+                ]
+
+            if args.json:
+                print(json.dumps(unlocked, ensure_ascii=False, indent=2))
+            else:
+                print_achievements(unlocked)
 
             return
 

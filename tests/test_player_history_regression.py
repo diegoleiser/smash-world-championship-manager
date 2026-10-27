@@ -47,6 +47,7 @@ class PlayerHistoryRegressionTests(unittest.TestCase):
                         },
                         load_elo_ranking=lambda _: [],
                         load_upsets=lambda: [],
+                        load_achievements=lambda: [],
                         format_ordinal=str,
                     )
                 charts = [call.args[0].to_dict() for call in ui.altair_chart.call_args_list]

@@ -230,6 +230,41 @@ class DashboardSmokeTests(unittest.TestCase):
         without_upset = self.run_app(page="Tournaments", tournament="1")
         self.assertNotIn("Upsets", [element.value for element in without_upset.subheader])
 
+    def test_achievements_render_on_player_and_tournament_pages(self) -> None:
+        player = self.run_app(page="Players", player_id="atlas")
+        self.assertIn("Achievements", [element.value for element in player.subheader])
+        first_title = next(
+            button for button in player.button if button.label == "First Title · WC 01"
+        )
+
+        first_title.click().run()
+        self.assert_no_exception(player)
+        self.assertIn("First Title", [element.value for element in player.subheader])
+        self.assertTrue(
+            any(
+                'data-label="Player"' in element.value
+                and "/players?player_id=atlas" in element.value
+                for element in player.markdown
+            )
+        )
+
+        archive = self.run_app(page="Tournaments", tournament="1")
+        self.assertIn(
+            "Achievements Unlocked",
+            [element.value for element in archive.subheader],
+        )
+        self.assertIn("First Title", [button.label for button in archive.button])
+        self.assertTrue(
+            any(
+                'class="control-table-link" href="/players?player_id=atlas"' in element.value
+                for element in archive.markdown
+            )
+        )
+
+        next(button for button in archive.button if button.label == "First Title").click().run()
+        self.assert_no_exception(archive)
+        self.assertIn("First Title", [element.value for element in archive.subheader])
+
     def test_hall_of_fame_shows_record_groups_and_recent_milestones(self) -> None:
         app = self.run_app(page="Hall of Fame")
         subheaders = [element.value for element in app.subheader]
