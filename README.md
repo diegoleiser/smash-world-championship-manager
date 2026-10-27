@@ -117,8 +117,9 @@ head-to-head effects, deciding-game performance and tournament-day variation.
 After a group stage, observed results inform a frozen day-performance estimate
 for the bracket.
 
-Forecast logic includes pre-tournament simulations, live single- and
-multi-group qualification probabilities, bracket continuation and exact late
+Forecast logic includes live single- and multi-group qualification
+probabilities, a title forecast that simulates the open group sets and the
+whole bracket once the groups exist, bracket continuation and exact late
 qualification-lock evaluation for the single-group path.
 
 Private trained model artifacts are deliberately excluded from this
@@ -284,5 +285,3 @@ Only synthetic examples belong in `examples/` and in public screenshots.
 - Exact late qualification-lock evaluation is available for the single-group
   path. Multi-group probabilities are calculated jointly, but lock labels stay
   conservative while any group set remains unresolved.
-- The separate Monte Carlo page is a lightweight planning and test surface;
-  production forecasts are integrated into the Tournament Manager.

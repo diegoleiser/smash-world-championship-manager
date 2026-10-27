@@ -23,6 +23,10 @@ from monte_carlo.live_multi_group import (
     forecast_live_groups,
 )
 from monte_carlo.model import CombinedModel
+from monte_carlo.tournament_forecast import (
+    TournamentForecast,
+    forecast_group_tournament,
+)
 from smash_stats.elo_history import get_elo_ranking
 from tournament.bracket_constants import ENTRY_SPLIT_BY_GROUP_SEED
 from tournament.bracket_seeding import get_bracket_size
@@ -49,8 +53,14 @@ class LiveDraftGroupState:
 def load_live_draft_group_states(
     db_path: str | Path,
     draft_id: str,
+    *,
+    require_split_entry: bool = True,
 ) -> tuple[LiveDraftGroupState, ...]:
-    """Load every draft group without modifying tournament state."""
+    """Load every draft group without modifying tournament state.
+
+    The Group forecast needs split bracket entry; the title forecast passes
+    ``require_split_entry=False`` because it simulates either entry mode.
+    """
 
     elo_by_player_id = {
         str(row["player_id"]): float(row["elo"])
@@ -69,7 +79,10 @@ def load_live_draft_group_states(
             raise ValueError(f"Tournament draft not found: {draft_id}")
         if str(draft["format_type"]) != FORMAT_GROUP_STAGE:
             raise ValueError("Live Group forecasts require a Group Stage draft.")
-        if str(draft["bracket_entry_mode"]) != ENTRY_SPLIT_BY_GROUP_SEED:
+        if (
+            require_split_entry
+            and str(draft["bracket_entry_mode"]) != ENTRY_SPLIT_BY_GROUP_SEED
+        ):
             raise ValueError(
                 "The current Live Group forecast supports split bracket entry."
             )
@@ -211,6 +224,49 @@ def forecast_live_draft_group(
         n_simulations,
         random_seed,
         winners_count=bracket_size // 2,
+    )
+
+
+def forecast_draft_title_before_bracket(
+    db_path: str | Path,
+    draft_id: str,
+    model: CombinedModel,
+    n_simulations: int,
+    random_seed: int,
+) -> TournamentForecast:
+    """Forecast titles for a Group Stage draft whose bracket is not built yet."""
+
+    states = load_live_draft_group_states(
+        db_path,
+        draft_id,
+        require_split_entry=False,
+    )
+    with open_sqlite_connection(db_path) as connection:
+        draft = connection.execute(
+            "SELECT bracket_entry_mode FROM tournament_drafts WHERE draft_id = ?",
+            (draft_id,),
+        ).fetchone()
+    model = model.with_neutral_players(
+        {
+            player.player_id: player.display_name
+            for state in states
+            for player in state.players
+        }
+    )
+    return forecast_group_tournament(
+        [
+            LiveGroupPool(
+                group_id=state.group_id,
+                group_name=state.group_name,
+                players=state.players,
+                matches=state.matches,
+            )
+            for state in states
+        ],
+        str(draft["bracket_entry_mode"]),
+        model,
+        n_simulations,
+        random_seed,
     )
 
 

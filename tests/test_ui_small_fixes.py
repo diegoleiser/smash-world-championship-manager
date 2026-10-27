@@ -1,8 +1,7 @@
-"""Regression tests for small dashboard fixes (group set order, defaults)."""
+"""Regression tests for small dashboard fixes (group set order)."""
 
 import unittest
 
-from dashboard_pages.forecast_format import default_participant_ids
 from tournament.archived_bracket import sort_group_matches_by_round
 
 
@@ -48,25 +47,6 @@ class GroupSetOrderTests(unittest.TestCase):
         matches = [_match("Round 2", "x"), _match("Round 1", "y")]
         sort_group_matches_by_round(matches)
         self.assertEqual([m["name"] for m in matches], ["x", "y"])
-
-
-class MonteCarloDefaultsTests(unittest.TestCase):
-    def test_includes_all_active_players_sorted_by_elo(self):
-        players = [
-            {"player_id": "1", "display_name": "Low", "active": 1, "core_player": 1},
-            {"player_id": "2", "display_name": "Debut", "active": 1, "core_player": 0},
-            {"player_id": "3", "display_name": "Gone", "active": 0, "core_player": 1},
-            {"player_id": "4", "display_name": "Top", "active": 1, "core_player": 1},
-        ]
-        elo = {"1": 900.0, "2": 1000.0, "3": 1200.0, "4": 1100.0}
-        self.assertEqual(default_participant_ids(players, elo), ["4", "2", "1"])
-
-    def test_caps_at_maximum_field_size(self):
-        players = [
-            {"player_id": str(i), "display_name": f"P{i}", "active": 1}
-            for i in range(40)
-        ]
-        self.assertEqual(len(default_participant_ids(players, {})), 32)
 
 
 if __name__ == "__main__":

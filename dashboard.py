@@ -21,7 +21,6 @@ try:
     from dashboard_pages import hall_of_fame as hall_of_fame_page
     from dashboard_pages import home as home_page
     from dashboard_pages import matchups as matchups_page
-    from dashboard_pages import monte_carlo as monte_carlo_page
     from dashboard_pages import player as player_page
     from dashboard_pages import tournaments as tournaments_page
     from dashboard_pages import tournament_manager as tournament_manager_page
@@ -1603,14 +1602,6 @@ def navigation_tournament_manager() -> None:
     show_tournament_manager()
 
 
-def navigation_monte_carlo() -> None:
-    monte_carlo_page.render_monte_carlo(
-        artifact_path=MODEL_ARTIFACT_PATH,
-        load_players=load_players,
-        load_elo_ranking=load_elo_ranking,
-    )
-
-
 def main() -> None:
     require_database()
 
@@ -1651,12 +1642,6 @@ def main() -> None:
             title="Tournament Manager",
             icon="🎛️",
             url_path="tournament-manager",
-        ),
-        st.Page(
-            navigation_monte_carlo,
-            title="Monte Carlo",
-            icon="🎲",
-            url_path="monte-carlo",
         ),
     ]
     page_by_legacy_name = {page.title: page for page in pages}
