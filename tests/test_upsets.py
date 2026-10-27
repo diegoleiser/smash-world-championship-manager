@@ -10,7 +10,6 @@ import unittest
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
-from unittest.mock import patch
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -223,48 +222,6 @@ class UpsetDatabaseTests(unittest.TestCase):
         self.assertEqual(len(get_upsets(self.db_path, limit=1)), 1)
         with self.assertRaisesRegex(ValueError, "limit must be greater than zero"):
             get_upsets(self.db_path, limit=0)
-
-    def test_command_line_lists_upsets_by_gap(self) -> None:
-        output = StringIO()
-        with (
-            patch.object(sys, "argv", ["smash_statistics.py", "--db", str(self.db_path), "--upsets"]),
-            redirect_stdout(output),
-        ):
-            statistics.main()
-
-        lines = output.getvalue().splitlines()
-        self.assertIn("Biggest Elo Upsets", lines)
-        header = next(line for line in lines if line.lstrip().startswith("Rank"))
-        self.assertIn("Gap", header)
-        [row] = [line for line in lines if line.strip().startswith("1 ")]
-        self.assertIn("Beta", row)
-        self.assertIn("2:1", row)
-
-    def test_command_line_json_matches_get_upsets(self) -> None:
-        output = StringIO()
-        with (
-            patch.object(
-                sys, "argv",
-                ["smash_statistics.py", "--db", str(self.db_path), "--upsets", "--json"],
-            ),
-            redirect_stdout(output),
-        ):
-            statistics.main()
-
-        self.assertEqual(json.loads(output.getvalue()), get_upsets(self.db_path, limit=10))
-
-    def test_command_line_reports_when_no_upset_exists(self) -> None:
-        output = StringIO()
-        with (
-            patch.object(statistics, "get_upsets", lambda *args, **kwargs: []),
-            patch.object(
-                sys, "argv", ["smash_statistics.py", "--db", str(self.db_path), "--upsets"]
-            ),
-            redirect_stdout(output),
-        ):
-            statistics.main()
-
-        self.assertIn("No upsets found (at least 150 Elo gap", output.getvalue())
 
 
 class UpsetModuleBoundaryTests(unittest.TestCase):

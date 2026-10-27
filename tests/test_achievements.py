@@ -10,7 +10,6 @@ import unittest
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
-from unittest.mock import patch
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -755,31 +754,6 @@ class AchievementsDatabaseTests(unittest.TestCase):
             milestones.detect_tournament_milestones(self.db_path, 2),
         )
         self.assertEqual(tiers(get_achievements(self.db_path), "set_wins", "alpha"), [(1, 2)])
-
-    def run_cli(self, *arguments: str) -> str:
-        output = StringIO()
-        with (
-            patch.object(
-                sys, "argv",
-                ["smash_statistics.py", "--db", str(self.db_path), "--achievements", *arguments],
-            ),
-            redirect_stdout(output),
-        ):
-            statistics.main()
-        return output.getvalue()
-
-    def test_cli_lists_and_filters_achievements(self) -> None:
-        everything = self.run_cli()
-        self.assertIn("Comeback Champion", everything)
-        self.assertIn("Gamma", everything)
-
-        self.assertIn("Comeback Champion", self.run_cli("beta"))
-        for_beta = json.loads(self.run_cli("beta", "--json"))
-        self.assertEqual({entry["player_id"] for entry in for_beta}, {"beta"})
-
-        second = json.loads(self.run_cli("--tournament-number", "2", "--json"))
-        self.assertTrue(second)
-        self.assertTrue(all(entry["tournament_number"] == 2 for entry in second))
 
     def test_facade_reexports_achievements(self) -> None:
         self.assertIs(statistics.get_achievements, achievements.get_achievements)

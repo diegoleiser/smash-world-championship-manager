@@ -240,35 +240,6 @@ def get_player_stats(
     return stats
 
 
-def get_all_player_stats(
-    db_path: str | Path = DEFAULT_DB_PATH,
-    *,
-    active_only: bool = False,
-) -> list[dict[str, Any]]:
-    """Calculates statistics for all players."""
-
-    with connect_db(db_path) as connection:
-        query = """
-            SELECT player_id
-            FROM players
-        """
-
-        if active_only:
-            query += " WHERE active = 1"
-
-        query += " ORDER BY display_name COLLATE NOCASE"
-
-        player_ids = [
-            row["player_id"]
-            for row in connection.execute(query).fetchall()
-        ]
-
-    return [
-        get_player_stats(player_id, db_path)
-        for player_id in player_ids
-    ]
-
-
 def get_player_history(
     player_reference: str,
     db_path: str | Path = DEFAULT_DB_PATH,

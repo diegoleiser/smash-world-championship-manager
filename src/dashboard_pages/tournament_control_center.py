@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from text_format import format_elo, format_elo_change, format_ordinal
+from text_format import (
+    format_elo,
+    format_elo_change,
+    format_ordinal,
+    with_medal,
+)
 
 
 def finalization_standings_table_data(
@@ -19,7 +24,6 @@ def finalization_standings_table_data(
             placement_counts.get(placement_value, 0) + 1
         )
 
-    medal_by_placement = {1: "🥇", 2: "🥈", 3: "🥉"}
     rows = []
     for placement in placements:
         placement_value = int(placement["placement"])
@@ -27,11 +31,11 @@ def finalization_standings_table_data(
         elo_after = float(placement["elo_after"])
         elo_change = float(placement["elo_change"])
         rows.append([
-            (
-                f"{medal_by_placement.get(placement_value, '')} "
+            with_medal(
+                placement_value,
                 f"{'T-' if placement_counts[placement_value] > 1 else ''}"
-                f"{format_ordinal(placement_value)}"
-            ).strip(),
+                f"{format_ordinal(placement_value)}",
+            ),
             str(placement["player"]),
             f"Seed #{initial_seed}",
             (

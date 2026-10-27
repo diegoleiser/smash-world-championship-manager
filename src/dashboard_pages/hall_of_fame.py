@@ -16,7 +16,7 @@ from dashboard_pages.ui_components import (
     internal_dashboard_link,
 )
 from smash_stats.hall_of_fame import HALL_OF_FAME_GROUPS
-from text_format import format_date, format_elo
+from text_format import format_date, format_elo, with_medal
 
 
 RECENT_MILESTONE_TOURNAMENTS = 3
@@ -196,9 +196,6 @@ def record_cards_html(records: list[dict[str, Any]]) -> str:
     )
 
 
-TITLE_RANK_ICONS = {1: "🥇", 2: "🥈", 3: "🥉"}
-
-
 def title_leaders_table(record: dict[str, Any]) -> dict[str, Any] | None:
     """Return dashboard_table_html data ranking every title holder."""
 
@@ -213,7 +210,7 @@ def title_leaders_table(record: dict[str, Any]) -> dict[str, Any] | None:
         titles = int(entry["value"])
         rows.append(
             [
-                f"{TITLE_RANK_ICONS.get(rank, '')} #{rank}".strip(),
+                with_medal(rank, f"#{rank}"),
                 str(player["player"]),
                 f"{titles} {'Title' if titles == 1 else 'Titles'}",
             ]
