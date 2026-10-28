@@ -178,9 +178,12 @@ def internal_dashboard_link(
     label: str,
     href: str,
     *,
-    class_name: str = "control-table-link",
+    class_name: str = "dash-link",
 ) -> str:
-    """Return an escaped same-app link for custom dashboard markup."""
+    """Return an escaped same-app link for custom dashboard markup.
+
+    Every internal link shares the ``dash-link`` style.
+    """
 
     link_text = str(href)
     if not (
@@ -837,22 +840,22 @@ def dashboard_table_styles() -> str:
             font-weight: 600;
             line-height: 1.3;
         }
-        .control-table-link,
-        .control-table-link:link,
-        .control-table-link:visited {
+        .dash-link,
+        .dash-link:link,
+        .dash-link:visited {
             color: inherit !important;
             font-weight: inherit;
             text-decoration: none !important;
         }
-        .control-table-link {
+        .dash-link {
             display: inline-block;
             transition: opacity 0.15s ease, transform 0.15s ease;
         }
-        .control-table-link:hover {
+        .dash-link:hover {
             opacity: 0.72;
             transform: translateX(3px);
         }
-        .control-table-link:focus-visible {
+        .dash-link:focus-visible {
             border-radius: 0.25rem;
             outline: 2px solid var(--primary-color, rgb(255, 75, 75));
             outline-offset: 3px;

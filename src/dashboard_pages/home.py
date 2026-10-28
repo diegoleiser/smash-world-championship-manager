@@ -11,6 +11,7 @@ import streamlit as st
 
 import narratives
 from dashboard_pages.navigation_routes import (
+    matchup_url,
     player_profile_url,
     tournament_archive_url,
 )
@@ -19,6 +20,7 @@ from dashboard_pages.timeline_order import (
 )
 from dashboard_pages.ui_components import (
     dashboard_table_html,
+    internal_dashboard_link,
     narrative_paragraphs_html,
     summary_box_html,
 )
@@ -33,6 +35,14 @@ from text_format import (
     format_elo_change,
     with_medal,
 )
+
+
+def _card_link(label: str, url: str | None) -> str:
+    """Link a card value when a target exists, otherwise just escape it."""
+
+    if url is None:
+        return html.escape(label)
+    return internal_dashboard_link(label, url)
 
 
 def render_home(
@@ -333,6 +343,34 @@ def render_home(
         most_titles_player = "–"
         most_titles_count = 0
 
+    winner_id_by_name = {
+        str(row["Winner"]): str(row["Winner ID"])
+        for row in tournaments
+        if row.get("Winner ID")
+    }
+    leader_html = _card_link(
+        str(leader["player"]),
+        player_profile_url(str(leader["player_id"])),
+    )
+    champion_html = _card_link(
+        str(current_champion),
+        player_profile_url(winner_id_by_name[str(current_champion)])
+        if str(current_champion) in winner_id_by_name
+        else None,
+    )
+    latest_tournament_html = _card_link(
+        str(latest_tournament),
+        tournament_archive_url(int(str(latest_tournament).split()[1]))
+        if tournaments
+        else None,
+    )
+    most_titles_html = _card_link(
+        str(most_titles_player),
+        player_profile_url(winner_id_by_name[str(most_titles_player)])
+        if str(most_titles_player) in winner_id_by_name
+        else None,
+    )
+
     st.divider()
     st.subheader("Current Overview")
 
@@ -371,7 +409,7 @@ def render_home(
         "margin-top:1.25rem;"
         "line-height:1.15;"
         "'>"
-        f"{html.escape(str(leader['player']))}"
+        f"{leader_html}"
         "</div>"
         "<div style='"
         "font-size:0.95rem;"
@@ -405,7 +443,7 @@ def render_home(
         "margin-top:1.25rem;"
         "line-height:1.15;"
         "'>"
-        f"{html.escape(str(current_champion))}"
+        f"{champion_html}"
         "</div>"
         "<div style='"
         "font-size:0.95rem;"
@@ -413,7 +451,7 @@ def render_home(
         "margin-top:auto;"
         "padding-top:1rem;"
         "'>"
-        f"Winner of {html.escape(str(latest_tournament))}"
+        f"Winner of {latest_tournament_html}"
         "</div>"
         "</div>"
 
@@ -439,7 +477,7 @@ def render_home(
         "margin-top:1.25rem;"
         "line-height:1.15;"
         "'>"
-        f"{html.escape(str(most_titles_player))}"
+        f"{most_titles_html}"
         "</div>"
         "<div style='"
         "font-size:0.95rem;"
@@ -506,17 +544,30 @@ def render_home(
         favorite_name = str(
             favorite.get("player") or "–"
         )
+        favorite_html = _card_link(
+            favorite_name,
+            player_profile_url(str(favorite["player_id"]))
+            if favorite.get("player_id")
+            else None,
+        )
         favorite_detail = (
             f"#{favorite.get('rank', '–')} · "
             f"{format_elo(favorite.get('elo') or 1000.0)} Elo"
         )
     else:
         favorite_name = "–"
+        favorite_html = favorite_name
         favorite_detail = "No ranking available"
 
     if main_challenger:
         challenger_name = str(
             main_challenger.get("player") or "–"
+        )
+        challenger_html = _card_link(
+            challenger_name,
+            player_profile_url(str(main_challenger["player_id"]))
+            if main_challenger.get("player_id")
+            else None,
         )
         challenger_detail = (
             f"#{main_challenger.get('rank', '–')} · "
@@ -524,12 +575,23 @@ def render_home(
         )
     else:
         challenger_name = "–"
+        challenger_html = challenger_name
         challenger_detail = "No challenger available"
 
     if featured_rivalry:
         rivalry_name = (
             f"{featured_rivalry['player_a']} vs "
             f"{featured_rivalry['player_b']}"
+        )
+        rivalry_html = _card_link(
+            rivalry_name,
+            matchup_url(
+                str(featured_rivalry["player_a_id"]),
+                str(featured_rivalry["player_b_id"]),
+            )
+            if featured_rivalry.get("player_a_id")
+            and featured_rivalry.get("player_b_id")
+            else None,
         )
 
         rivalry_detail = (
@@ -538,6 +600,7 @@ def render_home(
         )
     else:
         rivalry_name = "–"
+        rivalry_html = rivalry_name
         rivalry_detail = "No featured rivalry"
 
     st.divider()
@@ -626,7 +689,7 @@ def render_home(
         "ELO FAVORITE"
         "</div>"
         "<div class='preview-card-value'>"
-        f"{html.escape(favorite_name)}"
+        f"{favorite_html}"
         "</div>"
         "<div class='preview-card-detail'>"
         f"{html.escape(favorite_detail)}"
@@ -638,7 +701,7 @@ def render_home(
         "MAIN CHALLENGER"
         "</div>"
         "<div class='preview-card-value'>"
-        f"{html.escape(challenger_name)}"
+        f"{challenger_html}"
         "</div>"
         "<div class='preview-card-detail'>"
         f"{html.escape(challenger_detail)}"
@@ -650,7 +713,7 @@ def render_home(
         "FEATURED RIVALRY"
         "</div>"
         "<div class='preview-card-value'>"
-        f"{html.escape(rivalry_name)}"
+        f"{rivalry_html}"
         "</div>"
         "<div class='preview-card-detail'>"
         f"{html.escape(rivalry_detail)}"

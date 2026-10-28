@@ -1059,7 +1059,6 @@ def render_player_page(
         rivalry_name_html = internal_dashboard_link(
             rivalry_name,
             player_profile_url(str(featured_rivalry["opponent_id"])),
-            class_name="player-profile-link",
         )
     else:
         rivalry_name = "–"
@@ -1081,7 +1080,6 @@ def render_player_page(
         nemesis_name_html = internal_dashboard_link(
             nemesis_name,
             player_profile_url(str(nemesis["opponent_id"])),
-            class_name="player-profile-link",
         )
     else:
         nemesis_name = "–"
@@ -1109,25 +1107,6 @@ def render_player_page(
         "gap:1rem;"
         "margin-top:1rem;"
         "margin-bottom:1.25rem;"
-        "}"
-
-        ".player-profile-link,"
-        ".player-profile-link:link,"
-        ".player-profile-link:visited {"
-        "color:inherit!important;"
-        "font-weight:inherit;"
-        "text-decoration:none!important;"
-        "transition:opacity 0.15s ease;"
-        "}"
-
-        ".player-profile-link:hover {"
-        "opacity:0.7;"
-        "}"
-
-        ".player-profile-link:focus-visible {"
-        "border-radius:0.25rem;"
-        "outline:2px solid var(--primary-color, rgb(255,75,75));"
-        "outline-offset:3px;"
         "}"
 
         ".player-matchup-card {"
@@ -1384,7 +1363,6 @@ def render_player_page(
                 tournament_archive_url(
                     int(best_elo_event["tournament_number"])
                 ),
-                class_name="player-profile-link",
             )
 
             elo_jump_html = _highlight_card_html(
@@ -1404,12 +1382,10 @@ def render_player_page(
             loser_html = internal_dashboard_link(
                 str(biggest_upset["loser"]),
                 player_profile_url(str(biggest_upset["loser_id"])),
-                class_name="player-profile-link",
             )
             upset_tournament_html = internal_dashboard_link(
                 f"WC {int(biggest_upset['tournament_number']):02d}",
                 tournament_archive_url(int(biggest_upset["tournament_number"])),
-                class_name="player-profile-link",
             )
             upset_count = (
                 "1 upset win"
@@ -1728,7 +1704,12 @@ def render_player_page(
                 (
                     "PEAK REACHED AT",
                     "First tournament ending at this rating",
-                    html.escape(str(peak_row["tournament"])),
+                    internal_dashboard_link(
+                        str(peak_row["tournament"]),
+                        tournament_archive_url(
+                            int(peak_row["tournament_number"])
+                        ),
+                    ),
                 ),
             )
 
@@ -1844,7 +1825,6 @@ def render_player_page(
                 tournament_archive_url(
                     int(best_rank_row["tournament_number"])
                 ),
-                class_name="player-profile-link",
             )
 
             rank_scale = alt.Scale(

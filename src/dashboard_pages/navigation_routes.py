@@ -11,6 +11,15 @@ def player_profile_url(player_id: str) -> str:
     return f"/players?player_id={quote(str(player_id), safe='')}"
 
 
+def matchup_url(player_id: str, opponent_id: str) -> str:
+    """Return the internal URL comparing two players on the Matchups page."""
+
+    return (
+        f"/matchups?player={quote(str(player_id), safe='')}"
+        f"&opponent={quote(str(opponent_id), safe='')}"
+    )
+
+
 def tournament_archive_url(tournament_number: int) -> str:
     """Return the internal URL for one archived tournament number."""
 
