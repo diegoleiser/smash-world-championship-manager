@@ -15,6 +15,7 @@ from dashboard_pages.achievements import render_tournament_unlocks
 from dashboard_pages.navigation_routes import player_profile_url
 from dashboard_pages.ui_components import (
     dashboard_table_html,
+    internal_dashboard_link,
     narrative_paragraphs_html,
     selector_card_styles,
     summary_box_html,
@@ -87,14 +88,14 @@ def _archived_tournament_header_html(
         icon = MEDALS[placement]
         linked_names = []
         for player_name, player_id in podium_players[placement]:
-            escaped_name = html.escape(player_name)
             if player_id is None:
-                linked_names.append(escaped_name)
+                linked_names.append(html.escape(player_name))
             else:
                 linked_names.append(
-                    '<a class="archive-podium-link" '
-                    f'href="{html.escape(player_profile_url(player_id), quote=True)}" '
-                    f'target="_self">{escaped_name}</a>'
+                    internal_dashboard_link(
+                        player_name,
+                        player_profile_url(player_id),
+                    )
                 )
         names = " · ".join(linked_names) or "–"
         podium_items.append(
@@ -197,18 +198,6 @@ def _archived_tournament_header_html(
         font-weight: 800;
         text-overflow: ellipsis;
         white-space: nowrap;
-    }}
-    .archive-podium-link,
-    .archive-podium-link:link,
-    .archive-podium-link:visited {{
-        color: inherit !important;
-        text-decoration: none !important;
-    }}
-    .archive-podium-link:hover {{ opacity: 0.72; }}
-    .archive-podium-link:focus-visible {{
-        border-radius: 0.25rem;
-        outline: 2px solid var(--primary-color, rgb(255, 75, 75));
-        outline-offset: 3px;
     }}
     .archive-podium-1 .archive-podium-player {{
         font-size: 1.55rem;
@@ -361,6 +350,28 @@ def _all_matches_table_rows(
     return rows
 
 
+def _set_players_cell_html(
+    phase_matches: list[dict[str, Any]],
+) -> dict[tuple[int, int], str]:
+    """Link both player names in the Set column of a phase table."""
+
+    cells = {}
+    for row_index, match in enumerate(phase_matches):
+        names = []
+        for side in ("1", "2"):
+            player_id = match.get(f"player_{side}_id")
+            name = str(match[f"player_{side}"])
+            names.append(
+                internal_dashboard_link(
+                    name, player_profile_url(str(player_id)),
+                )
+                if player_id is not None
+                else html.escape(name)
+            )
+        cells[(row_index, 1)] = f"<span>{names[0]} vs {names[1]}</span>"
+    return cells
+
+
 def _phase_match_table_rows(
     matches: list[dict[str, Any]],
     archived_bracket_matches: list[dict[str, Any]],
@@ -374,6 +385,15 @@ def _phase_match_table_rows(
             archived_bracket_matches,
         )
     ]
+
+
+def _elo_summary_player_html(change: dict[str, Any]) -> str:
+    """Link the player named in an Elo summary card."""
+
+    return internal_dashboard_link(
+        str(change["Players"]),
+        player_profile_url(str(change["player_id"])),
+    )
 
 
 def _elo_change_table_rows(
@@ -837,6 +857,7 @@ def render_tournaments(
                         for row_index, match in enumerate(group_phase_matches)
                         if match.get("winner_id") is not None
                     },
+                    cell_html=_set_players_cell_html(group_phase_matches),
                     emphasis_column=1,
                     mobile_roles=["stat", "title", "aside", "stat"],
                 ),
@@ -998,6 +1019,7 @@ def render_tournaments(
                         for row_index, match in enumerate(bracket_phase_matches)
                         if match.get("winner_id") is not None
                     },
+                    cell_html=_set_players_cell_html(bracket_phase_matches),
                     emphasis_column=1,
                     mobile_roles=["stat", "title", "aside", "stat"],
                 ),
@@ -1070,7 +1092,7 @@ def render_tournaments(
                 "<div class='archive-elo-summary-item'>"
                 "<div class='archive-elo-summary-label'>Biggest Elo Gain</div>"
                 "<div class='archive-elo-summary-value'>"
-                f"{html.escape(str(biggest_gain['Players']))}"
+                f"{_elo_summary_player_html(biggest_gain)}"
                 "</div>"
                 "<div class='archive-elo-summary-change archive-elo-positive'>"
                 f"{format_elo_change(biggest_gain['Elo Change'])}"
@@ -1078,7 +1100,7 @@ def render_tournaments(
                 "<div class='archive-elo-summary-item'>"
                 "<div class='archive-elo-summary-label'>Biggest Elo Loss</div>"
                 "<div class='archive-elo-summary-value'>"
-                f"{html.escape(str(biggest_loss['Players']))}"
+                f"{_elo_summary_player_html(biggest_loss)}"
                 "</div>"
                 "<div class='archive-elo-summary-change archive-elo-negative'>"
                 f"{format_elo_change(biggest_loss['Elo Change'])}"

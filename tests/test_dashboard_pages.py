@@ -37,6 +37,7 @@ from dashboard_pages.tournament_manager import (  # noqa: E402
 )
 from dashboard_pages.hall_of_fame import (  # noqa: E402
     TIMELINE_COLORS,
+    linked_detail_html,
     timeline_colors,
     title_history_timeline_html,
     title_leaders_table,
@@ -465,7 +466,7 @@ class TournamentControlCenterTests(unittest.TestCase):
             emphasis_column=0,
         )
 
-        self.assertIn('class="control-table-link"', markup)
+        self.assertIn('class="dash-link"', markup)
         self.assertIn(
             'href="/players?player_id=a%26b"',
             markup,
@@ -788,6 +789,20 @@ class TitleHistoryTimelineTests(unittest.TestCase):
         self.assertEqual(title_history_timeline_html({"tournaments": []}), "")
 
 
+class LinkedDetailTests(unittest.TestCase):
+    def test_tournament_labels_in_details_become_links(self) -> None:
+        markup = linked_detail_html("2 titles · WC 02–WC 04 <x>")
+
+        self.assertIn(
+            '<a class="dash-link" href="/tournaments?tournament=2" '
+            'target="_self">WC 02</a>',
+            markup,
+        )
+        self.assertIn('href="/tournaments?tournament=4"', markup)
+        self.assertIn("2 titles · ", markup)
+        self.assertIn("&lt;x&gt;", markup)
+
+
 class TimelineColorTests(unittest.TestCase):
     @staticmethod
     def reign(player_id, first):
@@ -1083,7 +1098,7 @@ class TournamentPageTests(unittest.TestCase):
         self.assertIn("display: none", markup)
         self.assertIn("A &amp; B", markup)
         self.assertIn('href="/players?player_id=a"', markup)
-        self.assertIn("archive-podium-link", markup)
+        self.assertIn('class="dash-link"', markup)
         self.assertIn("&lt;Gamma&gt;", markup)
         self.assertNotIn("<Gamma>", markup)
         self.assertIn("@media (max-width: 700px)", markup)

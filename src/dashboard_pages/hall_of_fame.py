@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import re
 from typing import Any, Callable
 
 import streamlit as st
@@ -56,7 +57,6 @@ def _player_link(player: dict[str, Any]) -> str:
     return internal_dashboard_link(
         str(player["player"]),
         player_profile_url(str(player["player_id"])),
-        class_name="hof-link",
     )
 
 
@@ -72,6 +72,27 @@ def _players_html(entry: dict[str, Any], *, record_key: str) -> str:
         ' <span class="hof-muted">vs</span> '
         f'<span class="{second_class}">{links[1]}</span>'
     )
+
+
+_TOURNAMENT_LABEL = re.compile(r"WC (\d{2,})")
+
+
+def linked_detail_html(text: str) -> str:
+    """Escape a record detail and link every "WC nn" label in it."""
+
+    parts = []
+    position = 0
+    for match in _TOURNAMENT_LABEL.finditer(text):
+        parts.append(html.escape(text[position:match.start()]))
+        parts.append(
+            internal_dashboard_link(
+                match.group(0),
+                tournament_archive_url(int(match.group(1))),
+            )
+        )
+        position = match.end()
+    parts.append(html.escape(text[position:]))
+    return "".join(parts)
 
 
 def _detail_text(entry: dict[str, Any], record_key: str) -> str:
@@ -112,7 +133,7 @@ def _holder_line(group: list[dict[str, Any]], record: dict[str, Any]) -> str:
         '<div class="hof-value">'
         f'{html.escape(record_value_text(group[0]["value"], record["unit"]))}'
         "</div>"
-        + (f'<div class="hof-subline">{html.escape(detail)}</div>' if detail else "")
+        + (f'<div class="hof-subline">{linked_detail_html(detail)}</div>' if detail else "")
         + "</div>"
     )
 
@@ -126,7 +147,7 @@ def _runner_up_line(group: list[dict[str, Any]], record: dict[str, Any]) -> str:
         '<div class="hof-name">'
         f'<span class="hof-muted">{group[0]["rank"]}.</span> '
         f'{_group_players_html(group, record["key"])}</div>'
-        f'<div class="hof-subline">{html.escape(suffix)}</div>'
+        f'<div class="hof-subline">{linked_detail_html(suffix)}</div>'
         "</div>"
     )
 
@@ -374,7 +395,12 @@ def title_history_timeline_html(history: dict[str, Any]) -> str:
         )
 
     axis = "".join(
-        f'<div class="hof-axis-tick">WC {number:02d}</div>' for number in numbers
+        '<div class="hof-axis-tick">'
+        + internal_dashboard_link(
+            f"WC {number:02d}", tournament_archive_url(number),
+        )
+        + "</div>"
+        for number in numbers
     )
     return (
         f'<div class="hof-timeline" style="--hof-columns:{len(numbers)};">'
@@ -443,7 +469,7 @@ def hall_of_fame_styles() -> str:
             font-weight: 700;
             white-space: nowrap;
         }
-        .hof-reign .hof-link {
+        .hof-reign .dash-link {
             overflow: hidden;
             text-overflow: ellipsis;
         }
@@ -539,17 +565,6 @@ def hall_of_fame_styles() -> str:
             font-size: 0.78rem;
             font-weight: 600;
             line-height: 1.3;
-        }
-        .hof-link,
-        .hof-link:link,
-        .hof-link:visited {
-            color: inherit !important;
-            text-decoration: none !important;
-        }
-        .hof-link:hover,
-        .hof-link:focus-visible {
-            text-decoration: underline !important;
-            text-underline-offset: 0.18em;
         }
         .hof-more summary {
             margin-top: 0.5rem;

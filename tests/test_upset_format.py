@@ -96,7 +96,7 @@ class UpsetFormatTests(unittest.TestCase):
         self.assertEqual(len(table["columns"].split()), 4)
         self.assertEqual(
             table["cell_html"][(0, 1)],
-            '<span><a class="control-table-link" href="/tournaments?tournament=7" '
+            '<span><a class="dash-link" href="/tournaments?tournament=7" '
             'target="_self">WC 07</a> · Bracket</span>',
         )
 

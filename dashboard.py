@@ -555,6 +555,8 @@ def load_tournament_preview_data() -> dict[str, Any]:
                 featured_rivalry = {
                     "player_a": str(left["player"]),
                     "player_b": str(right["player"]),
+                    "player_a_id": left_id,
+                    "player_b_id": right_id,
                     "wins_a": left_wins,
                     "wins_b": right_wins,
                     "matches": decided,

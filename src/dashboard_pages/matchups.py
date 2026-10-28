@@ -363,6 +363,17 @@ def render_matchups(
     )
 
     if selected_pair is None:
+        name_by_id = {
+            player_id: name for name, player_id in player_by_name.items()
+        }
+        linked_names = (
+            name_by_id.get(str(st.query_params.get("player", ""))),
+            name_by_id.get(str(st.query_params.get("opponent", ""))),
+        )
+        if None not in linked_names and linked_names[0] != linked_names[1]:
+            selected_pair = linked_names
+
+    if selected_pair is None:
         st.info(
             "Choose a non-diagonal cell to compare the player in that "
             "row with the player in that column. The full head-to-head, "

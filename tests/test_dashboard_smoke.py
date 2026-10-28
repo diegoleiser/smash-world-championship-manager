@@ -8,6 +8,7 @@ database. The private ``data/smash_wm.db`` is never opened.
 
 from __future__ import annotations
 
+import re
 import shutil
 import sqlite3
 import sys
@@ -179,6 +180,32 @@ class DashboardSmokeTests(unittest.TestCase):
                 app = self.run_app(**({"page": page} if page else {}))
                 self.assertIn(title, [element.value for element in app.title])
 
+    def test_every_link_uses_the_shared_style(self) -> None:
+        allowed = {"dash-link", "archived-draft-link"}
+        for page, params in (
+            ("", {}),
+            ("Players", {"player_id": "atlas"}),
+            ("Tournaments", {"tournament": "4"}),
+            ("Hall of Fame", {}),
+        ):
+            with self.subTest(page=page or "Home"):
+                app = self.run_app(**({"page": page} if page else {}), **params)
+                classes = {
+                    link_class
+                    for element in app.markdown
+                    for link_class in re.findall(r'<a class="([^"]+)"', element.value)
+                }
+                self.assertTrue(classes)
+                self.assertLessEqual(classes, allowed)
+
+    def test_matchup_link_opens_the_pair(self) -> None:
+        app = self.run_app(page="Matchups", player="atlas", opponent="halo")
+
+        self.assertIn(
+            "Head-to-Head Details",
+            [element.value for element in app.subheader],
+        )
+
     def test_player_and_tournament_detail_links_render(self) -> None:
         for page, params in (
             ("Players", {"player_id": "atlas"}),
@@ -255,7 +282,7 @@ class DashboardSmokeTests(unittest.TestCase):
         self.assertIn("First Title", [button.label for button in archive.button])
         self.assertTrue(
             any(
-                'class="control-table-link" href="/players?player_id=atlas"' in element.value
+                'class="dash-link" href="/players?player_id=atlas"' in element.value
                 for element in archive.markdown
             )
         )
