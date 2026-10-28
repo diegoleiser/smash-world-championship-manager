@@ -209,6 +209,13 @@ def load_hall_of_fame(include_inactive: bool) -> list[dict[str, Any]]:
 
 
 @st.cache_data
+def load_title_and_elo_history() -> dict[str, Any]:
+    """Loads who was champion and Elo #1 after each tournament."""
+
+    return stats.get_title_and_elo_history(DB_PATH)
+
+
+@st.cache_data
 def load_head_to_head(
     player_a_id: str,
     player_b_id: str,
@@ -1593,6 +1600,7 @@ def navigation_hall_of_fame() -> None:
     hall_of_fame_page.render_hall_of_fame(
         _include_inactive_players(),
         load_hall_of_fame=load_hall_of_fame,
+        load_title_and_elo_history=load_title_and_elo_history,
         load_tournaments=load_tournaments,
         load_tournament_milestones=load_tournament_milestones,
     )

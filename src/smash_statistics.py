@@ -35,7 +35,11 @@ from smash_stats.achievements import (
     get_achievements,
     summarize_achievements,
 )
-from smash_stats.hall_of_fame import HALL_OF_FAME_GROUPS, get_hall_of_fame
+from smash_stats.hall_of_fame import (
+    HALL_OF_FAME_GROUPS,
+    get_hall_of_fame,
+    get_title_and_elo_history,
+)
 from smash_stats.upsets import (
     UPSET_MINIMUM_ELO_GAP,
     UPSET_MINIMUM_PRIOR_SETS,

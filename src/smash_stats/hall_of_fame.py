@@ -75,6 +75,47 @@ def rank_candidates(
     return ranked
 
 
+def consecutive_runs(
+    holders: list[tuple[int, str | None]],
+) -> list[dict[str, Any]]:
+    """
+    Groups a chronological ``(tournament_number, holder_id)`` list into runs.
+
+    Consecutive entries with the same holder form one run; ``None`` (no
+    holder known) forms runs of its own. Each run has ``player_id``,
+    ``first``, ``last`` and ``length``.
+    """
+
+    runs: list[dict[str, Any]] = []
+    for tournament_number, holder_id in holders:
+        if runs and runs[-1]["player_id"] == holder_id:
+            runs[-1]["last"] = tournament_number
+            runs[-1]["length"] += 1
+        else:
+            runs.append(
+                {
+                    "player_id": holder_id,
+                    "first": tournament_number,
+                    "last": tournament_number,
+                    "length": 1,
+                }
+            )
+    return runs
+
+
+def longest_runs(runs: list[dict[str, Any]]) -> dict[str, tuple[int, int, int]]:
+    """Return each holder's longest run as ``(length, first, last)``."""
+
+    best: dict[str, tuple[int, int, int]] = {}
+    for run in runs:
+        holder_id = run["player_id"]
+        if holder_id is None:
+            continue
+        if run["length"] > best.get(holder_id, (0, 0, 0))[0]:
+            best[holder_id] = (run["length"], run["first"], run["last"])
+    return best
+
+
 def build_hall_of_fame(
     *,
     players: dict[str, dict[str, Any]],
@@ -263,6 +304,49 @@ def build_hall_of_fame(
                 tournament_number,
             )
 
+    # Streaks: consecutive tournaments as champion, and consecutive
+    # tournaments that ended with the player at Elo #1. A tournament without
+    # rated Sets has no Elo ranking and breaks the run.
+    title_runs = longest_runs(
+        consecutive_runs(
+            [
+                (
+                    int(tournament["tournament_number"]),
+                    str(tournament["winner_id"])
+                    if tournament["winner_id"] is not None
+                    else None,
+                )
+                for tournament in sorted(
+                    tournaments,
+                    key=lambda tournament: int(tournament["tournament_number"]),
+                )
+            ]
+        )
+    )
+    leader_by_tournament = {
+        tournament_number: next(
+            (
+                str(snapshot["player_id"])
+                for snapshot in snapshots
+                if int(snapshot["rank"]) == 1
+            ),
+            None,
+        )
+        for tournament_number, snapshots in by_tournament.items()
+    }
+    tournament_numbers = sorted(
+        {int(tournament["tournament_number"]) for tournament in tournaments}
+        | set(leader_by_tournament)
+    )
+    elo_runs = longest_runs(
+        consecutive_runs(
+            [
+                (number, leader_by_tournament.get(number))
+                for number in tournament_numbers
+            ]
+        )
+    )
+
     def eligible(player_ids: Iterable[str]) -> bool:
         return all(player_id in players for player_id in player_ids)
 
@@ -274,6 +358,17 @@ def build_hall_of_fame(
             "titles",
             (single(player_id, count) for player_id, count in titles.items()),
             rank_all=True,
+        ),
+        record(
+            "longest_title_streak",
+            "championships",
+            "Longest Title Streak",
+            "titles",
+            (
+                single(player_id, length, _span_label(first, last))
+                for player_id, (length, first, last) in title_runs.items()
+                if eligible([player_id])
+            ),
         ),
         record(
             "most_finals",
@@ -370,6 +465,16 @@ def build_hall_of_fame(
             "Most Tournaments as Elo #1",
             "tournaments",
             (single(player_id, count) for player_id, count in elo_rank_one.items()),
+        ),
+        record(
+            "longest_elo_rank_one_run",
+            "elo_ranking",
+            "Longest Run as Elo #1",
+            "tournaments",
+            (
+                single(player_id, length, _span_label(first, last))
+                for player_id, (length, first, last) in elo_runs.items()
+            ),
         ),
         record(
             "most_elo_top_three",
@@ -478,3 +583,84 @@ def get_hall_of_fame(
         ),
         top_n=top_n,
     )
+
+
+def get_title_and_elo_history(
+    db_path: str | Path = DEFAULT_DB_PATH,
+    *,
+    start_rating: float = ELO_START_RATING,
+    k_factor: float = ELO_K_FACTOR,
+) -> dict[str, Any]:
+    """
+    Returns who was champion and who led the Elo ranking after each WC.
+
+    The history always ranks every player, inactive ones included, so a
+    former #1 never disappears from it. ``tournaments`` lists the tournament
+    numbers in order; ``champions`` and ``elo_leaders`` are runs of
+    consecutive tournaments (see ``consecutive_runs``) with the holder's
+    name added. Tournaments without rated Sets have no Elo leader.
+    ``active_player_ids`` lists the currently active players.
+    """
+
+    with connect_db(db_path) as connection:
+        player_rows = connection.execute(
+            "SELECT player_id, display_name, active FROM players"
+        ).fetchall()
+        tournament_rows = connection.execute(
+            """
+            SELECT tournament_number, winner_id
+            FROM tournaments
+            ORDER BY tournament_number
+            """
+        ).fetchall()
+
+    names = {
+        str(row["player_id"]): str(row["display_name"]) for row in player_rows
+    }
+    leaders = {
+        int(snapshot["tournament_number"]): str(snapshot["player_id"])
+        for snapshot in get_elo_ranking_timeline(
+            db_path,
+            active_only=False,
+            start_rating=start_rating,
+            k_factor=k_factor,
+        )
+        if int(snapshot["rank"]) == 1
+    }
+    numbers = [int(row["tournament_number"]) for row in tournament_rows]
+
+    def named(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        return [
+            {
+                **run,
+                "player": names.get(run["player_id"])
+                if run["player_id"] is not None
+                else None,
+            }
+            for run in runs
+        ]
+
+    return {
+        "tournaments": numbers,
+        "active_player_ids": sorted(
+            str(row["player_id"]) for row in player_rows if row["active"]
+        ),
+        "champions": named(
+            consecutive_runs(
+                [
+                    (
+                        int(row["tournament_number"]),
+                        str(row["winner_id"])
+                        if row["winner_id"] is not None
+                        else None,
+                    )
+                    for row in tournament_rows
+                ]
+            )
+        ),
+        "elo_leaders": named(
+            consecutive_runs(
+                [(number, leaders.get(number)) for number in numbers]
+            )
+        ),
+    }

@@ -35,7 +35,12 @@ from dashboard_pages.tournament_manager import (  # noqa: E402
     draft_header_metrics,
     title_forecast_table,
 )
-from dashboard_pages.hall_of_fame import title_leaders_table  # noqa: E402
+from dashboard_pages.hall_of_fame import (  # noqa: E402
+    TIMELINE_COLORS,
+    timeline_colors,
+    title_history_timeline_html,
+    title_leaders_table,
+)
 from dashboard_pages.tournament_control_center import (  # noqa: E402
     finalization_standings_table_data,
     group_ready_matches,
@@ -748,6 +753,76 @@ class TournamentControlCenterTests(unittest.TestCase):
             [match["group_match_id"] for match in ready],
             ["pending"],
         )
+
+
+class TitleHistoryTimelineTests(unittest.TestCase):
+    def test_runs_become_bars_and_the_current_holders_are_marked(self) -> None:
+        def run(player_id, first, last):
+            return {
+                "player_id": player_id,
+                "player": player_id.title() if player_id else None,
+                "first": first,
+                "last": last,
+                "length": last - first + 1,
+            }
+
+        markup = title_history_timeline_html(
+            {
+                "tournaments": [1, 2, 3, 4],
+                "champions": [run("beta", 1, 1), run("alpha", 2, 4)],
+                "elo_leaders": [run(None, 1, 1), run("alpha", 2, 3), run("beta", 4, 4)],
+            }
+        )
+
+        self.assertIn("--hof-columns:4;", markup)
+        self.assertIn("WC 04", markup)
+        self.assertIn("grid-column:2 / span 3;", markup)
+        self.assertIn('title="Alpha · WC 02–WC 04 · 3 titles"', markup)
+        self.assertIn('<span class="hof-reign-count">×3</span>', markup)
+        self.assertIn('title="No rated Sets">–</div>', markup)
+        champion_lane, elo_lane = markup.split("hof-lane-champion")[1].split(
+            "hof-lane-elo"
+        )
+        self.assertEqual(champion_lane.count("hof-reign-current"), 1)
+        self.assertIn('hof-reign hof-reign-current" style="grid-column:4', elo_lane)
+        self.assertEqual(title_history_timeline_html({"tournaments": []}), "")
+
+
+class TimelineColorTests(unittest.TestCase):
+    @staticmethod
+    def reign(player_id, first):
+        return {"player_id": player_id, "first": first}
+
+    def test_active_players_get_colours_in_order_of_first_appearance(self) -> None:
+        colors = timeline_colors(
+            {
+                "active_player_ids": ["alpha", "beta", "gamma"],
+                "champions": [self.reign("retired", 1), self.reign("beta", 2)],
+                "elo_leaders": [self.reign("alpha", 2), self.reign("gamma", 3)],
+            }
+        )
+
+        light, dark = TIMELINE_COLORS[0]
+        self.assertEqual(colors["beta"], f"light-dark({light}, {dark})")
+        self.assertEqual(
+            list(colors), ["beta", "alpha", "gamma"]
+        )
+        self.assertNotIn("retired", colors)
+
+    def test_only_eight_players_get_a_colour(self) -> None:
+        players = [f"p{index}" for index in range(10)]
+        colors = timeline_colors(
+            {
+                "active_player_ids": players,
+                "champions": [
+                    self.reign(player_id, index)
+                    for index, player_id in enumerate(players, start=1)
+                ],
+                "elo_leaders": [],
+            }
+        )
+
+        self.assertEqual(list(colors), players[:8])
 
 
 class TitleLeadersTableTests(unittest.TestCase):
