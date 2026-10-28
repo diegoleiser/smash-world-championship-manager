@@ -26,6 +26,7 @@ from init_db import (  # noqa: E402
 from smash_stats import hall_of_fame  # noqa: E402
 from smash_stats.hall_of_fame import (  # noqa: E402
     build_hall_of_fame,
+    consecutive_runs,
     get_hall_of_fame,
     rank_candidates,
 )
@@ -118,6 +119,71 @@ class RankCandidatesTests(unittest.TestCase):
         self.assertEqual(rank_candidates([self.candidate("Alpha", 0)]), [])
 
 
+class StreakTests(unittest.TestCase):
+    def test_runs_join_consecutive_holders_and_keep_gaps_apart(self) -> None:
+        runs = consecutive_runs(
+            [(1, None), (2, "alpha"), (3, "alpha"), (4, "beta"), (5, "alpha")]
+        )
+
+        self.assertEqual(
+            [(run["player_id"], run["first"], run["last"], run["length"]) for run in runs],
+            [
+                (None, 1, 1, 1),
+                ("alpha", 2, 3, 2),
+                ("beta", 4, 4, 1),
+                ("alpha", 5, 5, 1),
+            ],
+        )
+
+    def test_title_streak_counts_consecutive_championships(self) -> None:
+        records = build(
+            tournaments=[
+                {"tournament_number": number, "winner_id": winner}
+                for number, winner in (
+                    (4, "beta"), (1, "alpha"), (2, "alpha"), (3, "alpha"), (5, "alpha"),
+                )
+            ]
+        )
+
+        record = records["longest_title_streak"]
+        self.assertEqual(holders(record), [(1, ["alpha"], 3), (2, ["beta"], 1)])
+        self.assertEqual(record["entries"][0]["detail"], "WC 01–WC 03")
+
+    def test_elo_run_counts_consecutive_tournaments_at_rank_one(self) -> None:
+        timeline = []
+        for number, leader, second in (
+            (1, "beta", "alpha"),
+            (2, "alpha", "beta"),
+            (3, "alpha", "beta"),
+            (4, "beta", "alpha"),
+        ):
+            timeline += [
+                snapshot(number, leader, 1, 1100.0),
+                snapshot(number, second, 2, 1000.0),
+            ]
+
+        record = build(timeline=timeline)["longest_elo_rank_one_run"]
+
+        self.assertEqual(holders(record), [(1, ["alpha"], 2), (2, ["beta"], 1)])
+        self.assertEqual(record["entries"][0]["detail"], "WC 02–WC 03")
+
+    def test_tournament_without_rated_sets_breaks_the_elo_run(self) -> None:
+        timeline = [
+            snapshot(number, "alpha", 1, 1100.0) for number in (1, 2, 4)
+        ]
+
+        record = build(
+            tournaments=[
+                {"tournament_number": number, "winner_id": "alpha"}
+                for number in (1, 2, 3, 4)
+            ],
+            timeline=timeline,
+        )["longest_elo_rank_one_run"]
+
+        self.assertEqual(holders(record), [(1, ["alpha"], 2)])
+        self.assertEqual(record["entries"][0]["detail"], "WC 01–WC 02")
+
+
 class BuildHallOfFameTests(unittest.TestCase):
     def test_every_record_is_positive_and_grouped(self) -> None:
         records = build_hall_of_fame(
@@ -129,7 +195,7 @@ class BuildHallOfFameTests(unittest.TestCase):
         )
         groups = {key for key, _ in hall_of_fame.HALL_OF_FAME_GROUPS}
 
-        self.assertEqual(len(records), 15)
+        self.assertEqual(len(records), 17)
         self.assertTrue(all(record["group"] in groups for record in records))
         self.assertTrue(all(record["entries"] == [] for record in records))
         self.assertNotIn("longest_loss_streak", [record["key"] for record in records])
@@ -386,6 +452,22 @@ class HallOfFameDatabaseTests(unittest.TestCase):
         active = self.records(active_only=True)
         self.assertEqual(holders(active["most_titles"]), [(1, ["alpha"], 1)])
         self.assertEqual(holders(active["most_finals"]), [(1, ["alpha"], 2), (2, ["beta"], 1)])
+
+    def test_title_and_elo_history_keeps_inactive_players(self) -> None:
+        history = hall_of_fame.get_title_and_elo_history(self.db_path)
+
+        self.assertEqual(history["tournaments"], [1, 2])
+        self.assertEqual(
+            [
+                (run["player"], run["first"], run["last"])
+                for run in history["champions"]
+            ],
+            [("Retired", 1, 1), ("Alpha", 2, 2)],
+        )
+        # The retired player led the Elo ranking after WC 01 and stays in
+        # the history although inactive players are hidden elsewhere.
+        first_leader = history["elo_leaders"][0]
+        self.assertEqual((first_leader["player"], first_leader["first"]), ("Retired", 1))
 
     def test_empty_archive_has_no_record_holders(self) -> None:
         with sqlite3.connect(self.db_path) as connection, connection:

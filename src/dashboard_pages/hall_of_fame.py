@@ -259,9 +259,215 @@ def recent_milestone_table(
     }
 
 
+# Categorical colours for the active players in the timeline, in the order
+# they first appear; inactive players stay neutral. Light and dark steps of
+# the same eight hues.
+TIMELINE_COLORS = (
+    ("#2a78d6", "#3987e5"),
+    ("#eb6834", "#d95926"),
+    ("#1baf7a", "#199e70"),
+    ("#eda100", "#c98500"),
+    ("#e87ba4", "#d55181"),
+    ("#008300", "#008300"),
+    ("#6250d6", "#9085e9"),
+    ("#e34948", "#e66767"),
+)
+
+
+def timeline_colors(history: dict[str, Any]) -> dict[str, str]:
+    """Give each active player in the history a fixed colour.
+
+    Colours follow the order of first appearance (champion before Elo #1
+    within a tournament), so a later newcomer never repaints earlier bars.
+    """
+
+    active = set(history.get("active_player_ids", []))
+    first_seen: dict[str, tuple[int, int]] = {}
+    for lane_index, lane in enumerate(("champions", "elo_leaders")):
+        for run in history[lane]:
+            player_id = run["player_id"]
+            if player_id in active:
+                seen = (run["first"], lane_index)
+                first_seen[player_id] = min(first_seen.get(player_id, seen), seen)
+    ordered = sorted(first_seen, key=lambda player_id: first_seen[player_id])
+    return {
+        player_id: f"light-dark({light}, {dark})"
+        for player_id, (light, dark) in zip(ordered, TIMELINE_COLORS)
+    }
+
+
+def _reign_html(
+    run: dict[str, Any],
+    *,
+    column: int,
+    unit: str,
+    current: bool,
+    color: str | None,
+) -> str:
+    span = f"grid-column:{column} / span {run['length']};"
+    if run["player_id"] is None:
+        return (
+            f'<div class="hof-reign hof-reign-empty" style="{span}" '
+            'title="No rated Sets">–</div>'
+        )
+    first = f"WC {int(run['first']):02d}"
+    period = (
+        first
+        if run["length"] == 1
+        else f"{first}–WC {int(run['last']):02d}"
+    )
+    tooltip = (
+        f"{run['player']} · {period} · "
+        f"{record_value_text(run['length'], unit)}"
+    )
+    count = (
+        f'<span class="hof-reign-count">×{run["length"]}</span>'
+        if run["length"] > 1
+        else ""
+    )
+    classes = "hof-reign"
+    if color:
+        classes += " hof-reign-colored"
+        span += f"--hof-player:{color};"
+    if current:
+        classes += " hof-reign-current"
+    return (
+        f'<div class="{classes}" '
+        f'style="{span}" title="{html.escape(tooltip)}">'
+        f"{_player_link(run)}{count}</div>"
+    )
+
+
+def title_history_timeline_html(history: dict[str, Any]) -> str:
+    """Return the champion and Elo #1 lanes, one column per tournament.
+
+    Consecutive tournaments with the same holder form one bar, coloured per
+    active player (see ``timeline_colors``). The current champion and the
+    current Elo #1 get a stronger outline.
+    """
+
+    numbers = list(history["tournaments"])
+    if not numbers:
+        return ""
+    colors = timeline_colors(history)
+    column_by_number = {
+        number: index + 2 for index, number in enumerate(numbers)
+    }
+
+    def lane(label: str, runs: list[dict[str, Any]], unit: str, kind: str) -> str:
+        holders = [run for run in runs if run["player_id"] is not None]
+        current = holders[-1] if holders and holders[-1] is runs[-1] else None
+        return (
+            f'<div class="hof-lane-label">{label}</div>'
+            f'<div class="hof-lane hof-lane-{kind}">'
+            + "".join(
+                _reign_html(
+                    run,
+                    column=column_by_number[run["first"]] - 1,
+                    unit=unit,
+                    current=run is current,
+                    color=colors.get(run["player_id"]),
+                )
+                for run in runs
+            )
+            + "</div>"
+        )
+
+    axis = "".join(
+        f'<div class="hof-axis-tick">WC {number:02d}</div>' for number in numbers
+    )
+    return (
+        f'<div class="hof-timeline" style="--hof-columns:{len(numbers)};">'
+        '<div class="hof-timeline-grid">'
+        f'<div class="hof-lane hof-axis">{axis}</div>'
+        + lane("Champion", history["champions"], "titles", "champion")
+        + lane("Elo #1 after", history["elo_leaders"], "tournaments", "elo")
+        + "</div></div>"
+    )
+
+
 def hall_of_fame_styles() -> str:
     return """
         <style>
+        /* Right-to-left scrolling opens the timeline at the newest
+           tournaments; the grid itself reads left to right. */
+        .hof-timeline {
+            direction: rtl;
+            overflow-x: auto;
+            margin: 0.6rem 0 1.2rem;
+            padding: 0.85rem 1rem;
+            border: 1px solid rgba(128, 128, 128, 0.30);
+            border-radius: 0.8rem;
+            background: var(--swc-surface);
+        }
+        .hof-timeline-grid {
+            direction: ltr;
+            display: grid;
+            gap: 0.3rem;
+            min-width: calc(var(--hof-columns) * 3.9rem);
+        }
+        .hof-lane-label {
+            position: sticky;
+            left: 0;
+            width: max-content;
+            margin-top: 0.45rem;
+            color: var(--swc-text-600);
+            font-size: 0.7rem;
+            font-weight: 750;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .hof-lane {
+            display: grid;
+            grid-template-columns: repeat(var(--hof-columns), minmax(3.6rem, 1fr));
+            gap: 0.3rem;
+        }
+        .hof-axis-tick {
+            color: var(--swc-text-520);
+            font-size: 0.74rem;
+            font-weight: 650;
+            text-align: center;
+        }
+        .hof-reign {
+            display: flex;
+            min-width: 0;
+            align-items: baseline;
+            justify-content: center;
+            gap: 0.35rem;
+            padding: 0.42rem 0.35rem;
+            overflow: hidden;
+            border: 1px solid rgba(128, 128, 128, 0.32);
+            border-radius: 0.45rem;
+            background: rgba(128, 128, 128, 0.10);
+            font-size: 0.82rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .hof-reign .hof-link {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .hof-reign-count {
+            color: var(--swc-text-600);
+            font-size: 0.76rem;
+            font-weight: 650;
+        }
+        .hof-reign-colored {
+            border-color: color-mix(in srgb, var(--hof-player) 70%, transparent);
+            background: color-mix(in srgb, var(--hof-player) 26%, transparent);
+        }
+        .hof-reign-current {
+            border-width: 2px;
+            border-color: var(--hof-player, var(--swc-text-600));
+            box-shadow: 0 0 0 2px
+                color-mix(in srgb, var(--hof-player, var(--swc-text-600)) 30%, transparent);
+        }
+        .hof-reign-empty {
+            border-style: dashed;
+            background: transparent;
+            color: var(--swc-text-520);
+            font-weight: 600;
+        }
         .hof-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr));
@@ -364,6 +570,7 @@ def render_hall_of_fame(
     include_inactive: bool,
     *,
     load_hall_of_fame: Callable[[bool], list[dict[str, Any]]],
+    load_title_and_elo_history: Callable[[], dict[str, Any]],
     load_tournaments: Callable[[], list[dict[str, Any]]],
     load_tournament_milestones: Callable[[int], list[str]],
 ) -> None:
@@ -401,6 +608,17 @@ def render_hall_of_fame(
                 )
         if group_records:
             st.markdown(record_cards_html(group_records), unsafe_allow_html=True)
+
+    history = load_title_and_elo_history()
+    if history["tournaments"]:
+        st.subheader("Title & Elo #1 History")
+        st.caption(
+            "Who won each World Championship and who led the Elo ranking "
+            "afterwards, among all players. Consecutive tournaments form one "
+            "bar; each active player has a colour, and the current champion "
+            "and the current #1 are outlined."
+        )
+        st.markdown(title_history_timeline_html(history), unsafe_allow_html=True)
 
     st.subheader("Recent Milestones")
     recent = sorted(

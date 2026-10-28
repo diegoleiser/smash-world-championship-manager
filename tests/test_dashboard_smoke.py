@@ -271,6 +271,13 @@ class DashboardSmokeTests(unittest.TestCase):
         for group in ("Championships", "Performance", "Elo Ranking", "Rivalries"):
             self.assertIn(group, subheaders)
         self.assertIn("Recent Milestones", subheaders)
+        self.assertIn("Title & Elo #1 History", subheaders)
+        self.assertTrue(
+            any(
+                'class="hof-timeline"' in element.value
+                for element in app.markdown
+            )
+        )
         card_grids = [
             element.value
             for element in app.markdown
